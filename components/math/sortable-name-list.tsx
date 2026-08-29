@@ -175,7 +175,7 @@ function SortableRow<T extends SortableNameItem>({
       <button
         type="button"
         aria-label="순서 변경"
-        className="shrink-0 cursor-grab touch-none text-text-secondary hover:text-text-primary active:cursor-grabbing"
+        className="-my-1.5 -ml-1 flex h-10 w-10 shrink-0 cursor-grab touch-none items-center justify-center rounded-sm text-text-secondary hover:bg-accent-soft hover:text-text-primary active:cursor-grabbing"
         {...attributes}
         {...listeners}
       >

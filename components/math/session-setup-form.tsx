@@ -183,7 +183,7 @@ export function SessionSetupForm({ mode }: { mode: "practice" | "exam" }) {
               onClick={() => setUseTimeLimit((v) => !v)}
               aria-pressed={useTimeLimit}
               className={cn(
-                "rounded-sm border px-3 py-1.5 text-sm font-medium transition-colors",
+                "inline-flex min-h-10 items-center justify-center rounded-sm border px-3 text-sm font-medium transition-colors",
                 useTimeLimit
                   ? "border-accent bg-accent-soft text-accent"
                   : "border-border text-text-secondary hover:bg-accent-soft hover:text-text-primary"

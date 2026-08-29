@@ -77,7 +77,7 @@ export function ProblemFilters({
           aria-label="즐겨찾기만 보기"
           title="즐겨찾기만 보기"
           className={cn(
-            "flex h-9 w-9 items-center justify-center rounded-full transition-colors",
+            "flex h-10 w-10 items-center justify-center rounded-full transition-colors",
             value.favoriteOnly ? "text-accent" : "text-text-secondary hover:text-accent"
           )}
         >

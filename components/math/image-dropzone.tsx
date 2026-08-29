@@ -127,9 +127,9 @@ export function ImageDropzone({
                   removeImage(img.clientId);
                 }}
                 aria-label="이미지 삭제"
-                className="absolute right-1 top-1 rounded-full bg-black/60 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                className="absolute right-1 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white transition-opacity"
               >
-                <X size={14} strokeWidth={2} />
+                <X size={16} strokeWidth={2} />
               </button>
             </div>
           ))}

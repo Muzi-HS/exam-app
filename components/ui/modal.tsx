@@ -35,7 +35,7 @@ export function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center sm:p-4"
       onClick={onClose}
     >
       <div
@@ -43,7 +43,7 @@ export function Modal({
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          "max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-md border border-border bg-surface p-5 shadow-subtle",
+          "max-h-[85vh] w-full overflow-y-auto rounded-t-lg border-t border-border bg-surface p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-subtle sm:max-w-lg sm:rounded-md sm:border sm:pb-5",
           className
         )}
       >
@@ -54,7 +54,7 @@ export function Modal({
               type="button"
               onClick={onClose}
               aria-label="닫기"
-              className="rounded-sm p-1 text-text-secondary hover:bg-accent-soft hover:text-text-primary"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm text-text-secondary hover:bg-accent-soft hover:text-text-primary"
             >
               <X size={18} strokeWidth={1.75} />
             </button>

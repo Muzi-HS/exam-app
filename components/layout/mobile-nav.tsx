@@ -37,7 +37,9 @@ export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-20 flex border-t border-border bg-surface md:hidden">
+    <nav
+      className="fixed inset-x-0 bottom-0 z-20 flex border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] md:hidden"
+    >
       {NAV_ITEMS.map((item) => {
         const active = item.match(pathname);
         const Icon = item.icon;
@@ -46,7 +48,7 @@ export function MobileNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px]",
+              "flex min-h-10 flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[11px]",
               active ? "text-accent" : "text-text-secondary"
             )}
           >

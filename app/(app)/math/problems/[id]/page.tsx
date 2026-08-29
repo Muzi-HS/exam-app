@@ -193,7 +193,7 @@ export default function ProblemDetailPage() {
         <div className="flex items-center gap-2">
           <Link
             href={`/math/problems/${problemId}/edit`}
-            className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-accent-soft hover:text-text-primary"
+            className="inline-flex items-center gap-1.5 min-h-10 rounded-sm border border-border px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-accent-soft hover:text-text-primary"
           >
             <Pencil size={15} strokeWidth={1.75} />
             수정
@@ -265,7 +265,7 @@ export default function ProblemDetailPage() {
             href={problem.youtube_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex w-fit items-center gap-1.5 rounded-sm border border-border px-3 py-2 text-sm text-text-primary hover:bg-accent-soft"
+            className="inline-flex w-fit items-center gap-1.5 min-h-10 rounded-sm border border-border px-3 py-2 text-sm text-text-primary hover:bg-accent-soft"
           >
             <Youtube size={16} strokeWidth={1.75} />
             유튜브에서 보기

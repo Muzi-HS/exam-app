@@ -189,7 +189,7 @@ export default function ProblemsPage() {
           </Button>
           <Link
             href="/math/problems/new"
-            className="inline-flex items-center justify-center gap-2 rounded-sm bg-accent px-3.5 py-2 text-sm font-medium text-bg transition-colors hover:opacity-90"
+            className="inline-flex items-center justify-center gap-2 min-h-10 rounded-sm bg-accent px-3.5 py-2 text-sm font-medium text-bg transition-colors hover:opacity-90"
           >
             <Plus size={15} strokeWidth={1.75} />
             문제 등록
@@ -257,7 +257,7 @@ export default function ProblemsPage() {
       )}
 
       {selectionMode && (
-        <div className="fixed inset-x-0 bottom-16 z-10 flex justify-center px-4 md:bottom-4">
+        <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 flex justify-center px-4 md:bottom-4">
           <div className="flex items-center gap-3 rounded-md border border-border bg-surface px-4 py-2.5 shadow-subtle">
             <span className="font-mono text-sm text-text-primary">{selectedIds.size}개 선택됨</span>
             <Button

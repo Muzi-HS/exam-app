@@ -112,7 +112,7 @@ export function ConceptPracticeSession({
         </div>
         <Link
           href={`${basePath}/practice`}
-          className="inline-flex w-fit items-center gap-1.5 rounded-sm bg-accent px-3.5 py-2 text-sm font-medium text-bg transition-colors hover:opacity-90"
+          className="inline-flex w-fit items-center gap-1.5 min-h-10 rounded-sm bg-accent px-3.5 py-2 text-sm font-medium text-bg transition-colors hover:opacity-90"
         >
           새 연습 시작하기
         </Link>

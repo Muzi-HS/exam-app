@@ -10,7 +10,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className="flex flex-1 flex-col">
         <Topbar />
-        <main className="flex-1 px-4 py-6 pb-20 md:px-8 md:pb-6">{children}</main>
+        <main className="flex-1 px-4 py-6 pb-[calc(5rem+env(safe-area-inset-bottom))] md:px-8 md:pb-6">
+          {children}
+        </main>
       </div>
       <MobileNav />
     </div>

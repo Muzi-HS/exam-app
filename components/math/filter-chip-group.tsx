@@ -33,7 +33,8 @@ export function FilterChipGroup<T extends string>({
     }
   }
 
-  const sizeClasses = size === "sm" ? "px-2 py-1 text-xs" : "px-3 py-1.5 text-sm";
+  const sizeClasses =
+    size === "sm" ? "min-h-10 px-2.5 text-xs" : "min-h-10 px-3 text-sm";
 
   return (
     <div className={cn("flex flex-wrap gap-1.5", className)}>
@@ -46,7 +47,7 @@ export function FilterChipGroup<T extends string>({
             onClick={() => toggle(opt.value)}
             aria-pressed={active}
             className={cn(
-              "rounded-sm border font-medium transition-colors",
+              "inline-flex items-center justify-center rounded-sm border font-medium transition-colors",
               sizeClasses,
               opt.color
                 ? active

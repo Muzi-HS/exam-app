@@ -39,7 +39,7 @@ export function StatusChipGroup({
             aria-label={STATUS_LABEL[value]}
             aria-pressed={active}
             className={cn(
-              "flex h-9 w-9 items-center justify-center rounded-full border-2 transition-colors",
+              "flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors",
               STATUS_COLOR_CLASS[value],
               active ? STATUS_RING_CLASS[value] : "border-transparent hover:bg-accent-soft"
             )}

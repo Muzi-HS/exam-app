@@ -169,7 +169,7 @@ export default function PracticeSessionPage() {
             href={item.problem.youtube_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex w-fit items-center gap-1.5 rounded-sm border border-border px-3 py-2 text-sm text-text-primary hover:bg-accent-soft"
+            className="inline-flex w-fit items-center gap-1.5 min-h-10 rounded-sm border border-border px-3 py-2 text-sm text-text-primary hover:bg-accent-soft"
           >
             <Youtube size={16} strokeWidth={1.75} />
             유튜브에서 보기
@@ -251,7 +251,7 @@ function PracticeResult({ items }: { items: SessionItem[] }) {
 
       <Link
         href="/math/practice"
-        className="inline-flex w-fit items-center gap-1.5 rounded-sm bg-accent px-3.5 py-2 text-sm font-medium text-bg transition-colors hover:opacity-90"
+        className="inline-flex w-fit items-center gap-1.5 min-h-10 rounded-sm bg-accent px-3.5 py-2 text-sm font-medium text-bg transition-colors hover:opacity-90"
       >
         새 연습 시작하기
       </Link>

@@ -23,7 +23,7 @@ export function ConceptExamPage({ domain }: { domain: MindmapDomain }) {
           type="button"
           onClick={() => setTab("new")}
           className={cn(
-            "border-b-2 px-3 py-2 text-sm transition-colors",
+            "inline-flex min-h-10 items-center border-b-2 px-3 text-sm transition-colors",
             tab === "new"
               ? "border-accent font-medium text-text-primary"
               : "border-transparent text-text-secondary hover:text-text-primary"
@@ -35,7 +35,7 @@ export function ConceptExamPage({ domain }: { domain: MindmapDomain }) {
           type="button"
           onClick={() => setTab("history")}
           className={cn(
-            "border-b-2 px-3 py-2 text-sm transition-colors",
+            "inline-flex min-h-10 items-center border-b-2 px-3 text-sm transition-colors",
             tab === "history"
               ? "border-accent font-medium text-text-primary"
               : "border-transparent text-text-secondary hover:text-text-primary"

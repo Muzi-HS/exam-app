@@ -96,7 +96,7 @@ export function NodeDetailPanel({
     <div className="fixed inset-0 z-40 flex items-end justify-end sm:items-stretch">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div
-        className="relative flex max-h-[85vh] w-full flex-col gap-4 overflow-y-auto rounded-t-lg border-t border-border bg-surface p-4 shadow-subtle sm:h-full sm:max-h-none sm:w-[420px] sm:rounded-none sm:rounded-l-lg sm:border-l sm:border-t-0"
+        className="relative flex max-h-[85vh] w-full flex-col gap-4 overflow-y-auto rounded-t-lg border-t border-border bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-subtle sm:h-full sm:max-h-none sm:w-[420px] sm:rounded-none sm:rounded-l-lg sm:border-l sm:border-t-0"
       >
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium text-text-secondary">개념 상세</p>
@@ -105,7 +105,7 @@ export function NodeDetailPanel({
               type="button"
               onClick={() => setConfirmingDelete(true)}
               aria-label="개념 삭제"
-              className="rounded-sm p-1.5 text-text-secondary hover:bg-accent-soft hover:text-status-unknown"
+              className="flex h-10 w-10 items-center justify-center rounded-sm text-text-secondary hover:bg-accent-soft hover:text-status-unknown"
             >
               <Trash2 size={17} strokeWidth={1.75} />
             </button>
@@ -113,7 +113,7 @@ export function NodeDetailPanel({
               type="button"
               onClick={onClose}
               aria-label="닫기"
-              className="rounded-sm p-1.5 text-text-secondary hover:bg-accent-soft hover:text-text-primary"
+              className="flex h-10 w-10 items-center justify-center rounded-sm text-text-secondary hover:bg-accent-soft hover:text-text-primary"
             >
               <X size={18} strokeWidth={1.75} />
             </button>

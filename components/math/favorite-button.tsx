@@ -37,7 +37,7 @@ export function FavoriteButton({
       aria-label={isFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가"}
       aria-pressed={isFavorite}
       className={cn(
-        "shrink-0 text-text-secondary transition-colors hover:text-accent disabled:opacity-50",
+        "-m-2 flex h-10 w-10 shrink-0 items-center justify-center text-text-secondary transition-colors hover:text-accent disabled:opacity-50",
         isFavorite && "text-accent",
         className
       )}

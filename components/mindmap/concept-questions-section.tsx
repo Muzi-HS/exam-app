@@ -161,7 +161,7 @@ function ConceptQuestionItem({
           type="button"
           onClick={onDelete}
           aria-label="문제 삭제"
-          className="shrink-0 text-text-secondary hover:text-status-unknown"
+          className="-m-2 flex h-10 w-10 shrink-0 items-center justify-center text-text-secondary hover:text-status-unknown"
         >
           <Trash2 size={15} strokeWidth={1.75} />
         </button>
@@ -170,7 +170,7 @@ function ConceptQuestionItem({
       <button
         type="button"
         onClick={() => setShowAnswer((v) => !v)}
-        className="mt-2 flex items-center gap-1 text-xs font-medium text-accent"
+        className="-ml-2 mt-1 flex h-10 items-center gap-1 px-2 text-xs font-medium text-accent"
       >
         {showAnswer ? <ChevronDown size={14} strokeWidth={1.75} /> : <ChevronRight size={14} strokeWidth={1.75} />}
         해설 보기

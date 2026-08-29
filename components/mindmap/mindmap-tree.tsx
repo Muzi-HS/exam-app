@@ -77,16 +77,13 @@ function TreeRow({
 
   return (
     <div>
-      <div
-        className="flex items-center gap-1 py-1"
-        style={{ paddingLeft: depth * 18 }}
-      >
+      <div className="flex items-center gap-0.5 py-0.5" style={{ paddingLeft: depth * 16 }}>
         {hasChildren ? (
           <button
             type="button"
             onClick={() => onToggleCollapse(node)}
             aria-label={node.is_collapsed ? "펼치기" : "접기"}
-            className="shrink-0 rounded-sm p-1 text-text-secondary hover:bg-accent-soft"
+            className="flex h-10 w-8 shrink-0 items-center justify-center rounded-sm text-text-secondary hover:bg-accent-soft"
           >
             {node.is_collapsed ? (
               <ChevronRight size={16} strokeWidth={1.75} />
@@ -95,13 +92,13 @@ function TreeRow({
             )}
           </button>
         ) : (
-          <span className="w-6 shrink-0" />
+          <span className="w-8 shrink-0" />
         )}
 
         <button
           type="button"
           onClick={() => onSelect(node.id)}
-          className="min-w-0 flex-1 whitespace-normal break-words rounded-sm px-2 py-2 text-left text-sm leading-snug text-text-primary hover:bg-accent-soft"
+          className="min-h-10 min-w-0 flex-1 whitespace-normal break-words rounded-sm px-2 py-2 text-left text-sm leading-snug text-text-primary hover:bg-accent-soft"
         >
           {node.name}
         </button>
@@ -112,7 +109,7 @@ function TreeRow({
           disabled={isFirst}
           aria-label="위로 이동"
           className={cn(
-            "shrink-0 rounded-sm p-1.5 text-text-secondary hover:bg-accent-soft disabled:opacity-30"
+            "flex h-10 w-8 shrink-0 items-center justify-center rounded-sm text-text-secondary hover:bg-accent-soft disabled:opacity-30"
           )}
         >
           <ArrowUp size={14} strokeWidth={1.75} />
@@ -122,7 +119,7 @@ function TreeRow({
           onClick={() => onMoveSibling(node, "down")}
           disabled={isLast}
           aria-label="아래로 이동"
-          className="shrink-0 rounded-sm p-1.5 text-text-secondary hover:bg-accent-soft disabled:opacity-30"
+          className="flex h-10 w-8 shrink-0 items-center justify-center rounded-sm text-text-secondary hover:bg-accent-soft disabled:opacity-30"
         >
           <ArrowDown size={14} strokeWidth={1.75} />
         </button>
@@ -130,7 +127,7 @@ function TreeRow({
           type="button"
           onClick={() => onAddChild(node.id)}
           aria-label="하위 개념 추가"
-          className="shrink-0 rounded-sm p-1.5 text-text-secondary hover:bg-accent-soft hover:text-accent"
+          className="flex h-10 w-8 shrink-0 items-center justify-center rounded-sm text-text-secondary hover:bg-accent-soft hover:text-accent"
         >
           <Plus size={15} strokeWidth={1.75} />
         </button>

@@ -89,6 +89,8 @@ function ImageGrid({
           key={img.id}
           src={img.url}
           alt=""
+          loading={index === 0 ? "eager" : "lazy"}
+          decoding="async"
           onClick={() => onOpen(index)}
           className="w-full cursor-zoom-in rounded-sm border border-border object-contain"
         />

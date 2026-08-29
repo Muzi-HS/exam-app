@@ -179,7 +179,7 @@ export function SubjectsManager() {
             type="button"
             aria-label={expanded.has(subject.id) ? "접기" : "펼치기"}
             onClick={() => toggleExpanded(subject.id)}
-            className="shrink-0 text-text-secondary hover:text-text-primary"
+            className="-my-2 -ml-1 flex h-10 w-10 shrink-0 items-center justify-center text-text-secondary hover:text-text-primary"
           >
             {expanded.has(subject.id) ? (
               <ChevronDown size={16} strokeWidth={1.75} />
