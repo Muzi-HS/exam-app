@@ -1,13 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 export default function LoginPage() {
-  const router = useRouter();
   const supabase = createClient();
 
   const [email, setEmail] = useState("");
@@ -29,8 +27,13 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/");
-    router.refresh();
+    // router.push + router.refresh는 @supabase/ssr 브라우저 클라이언트가
+    // 세션 쿠키를 document.cookie에 다 쓰기 전에 다음 네비게이션(및 그에 따른
+    // middleware 실행)이 시작될 수 있어, 쿠키가 아직 없다고 판단한 middleware가
+    // 다시 /login으로 돌려보내는 경우가 있었습니다(그래서 두 번째 클릭부터만 성공).
+    // window.location.href로 완전한 하드 네비게이션을 하면 브라우저가 실제 요청을
+    // 보내는 시점에는 쿠키 쓰기가 항상 끝나 있으므로 이 경쟁 상태가 사라집니다.
+    window.location.href = "/";
   }
 
   return (

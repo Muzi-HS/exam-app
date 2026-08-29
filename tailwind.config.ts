@@ -2,7 +2,7 @@ import type { Config } from "tailwindcss";
 
 const config: Config = {
   darkMode: "class",
-  content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
+  content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./lib/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
@@ -17,6 +17,24 @@ const config: Config = {
           unknown: "rgb(var(--status-unknown) / <alpha-value>)",
           partial: "rgb(var(--status-partial) / <alpha-value>)",
           mastered: "rgb(var(--status-mastered) / <alpha-value>)",
+        },
+        subject: {
+          1: "rgb(var(--subject-1) / <alpha-value>)",
+          "1-soft": "rgb(var(--subject-1-soft) / <alpha-value>)",
+          2: "rgb(var(--subject-2) / <alpha-value>)",
+          "2-soft": "rgb(var(--subject-2-soft) / <alpha-value>)",
+          3: "rgb(var(--subject-3) / <alpha-value>)",
+          "3-soft": "rgb(var(--subject-3-soft) / <alpha-value>)",
+          4: "rgb(var(--subject-4) / <alpha-value>)",
+          "4-soft": "rgb(var(--subject-4-soft) / <alpha-value>)",
+          5: "rgb(var(--subject-5) / <alpha-value>)",
+          "5-soft": "rgb(var(--subject-5-soft) / <alpha-value>)",
+          6: "rgb(var(--subject-6) / <alpha-value>)",
+          "6-soft": "rgb(var(--subject-6-soft) / <alpha-value>)",
+          7: "rgb(var(--subject-7) / <alpha-value>)",
+          "7-soft": "rgb(var(--subject-7-soft) / <alpha-value>)",
+          8: "rgb(var(--subject-8) / <alpha-value>)",
+          "8-soft": "rgb(var(--subject-8-soft) / <alpha-value>)",
         },
       },
       fontFamily: {

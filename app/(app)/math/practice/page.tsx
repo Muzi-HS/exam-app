@@ -1,13 +1,15 @@
-import { EmptyState } from "@/components/ui/empty-state";
+import { SessionSetupForm } from "@/components/math/session-setup-form";
 
 export default function Page() {
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold text-text-primary">연습 모드</h2>
-      <EmptyState
-        title="아직 구현되지 않았습니다"
-        description="Phase 3에서 연습 세션 기능이 추가됩니다."
-      />
+      <div>
+        <h2 className="text-lg font-semibold text-text-primary">연습 모드</h2>
+        <p className="mt-1 text-sm text-text-secondary">
+          범위를 설정하고 한 문제씩 풀며 이해도를 기록하세요.
+        </p>
+      </div>
+      <SessionSetupForm mode="practice" />
     </div>
   );
 }

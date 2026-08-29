@@ -11,8 +11,27 @@
   --accent: 31 58 95;
   --accent-soft: 224 231 240;
   --status-unknown: 181 68 68;
-  --status-partial: 184 134 11;
+  --status-partial: 217 107 26;
   --status-mastered: 47 133 90;
+
+  /* 과목별 색상 팔레트(파스텔): order_index를 순환 배정해 과목/단원 칩을 구분합니다.
+     빨간 계열은 이해도(이해 못함) 색과 겹치지 않도록 피하고, 4번은 핑크로 뒀습니다. */
+  --subject-1: 129 140 248;
+  --subject-1-soft: 229 231 255;
+  --subject-2: 167 139 250;
+  --subject-2-soft: 240 235 254;
+  --subject-3: 232 121 249;
+  --subject-3-soft: 252 235 255;
+  --subject-4: 244 114 182;
+  --subject-4-soft: 252 231 243;
+  --subject-5: 251 146 60;
+  --subject-5-soft: 255 239 220;
+  --subject-6: 163 200 53;
+  --subject-6-soft: 240 250 216;
+  --subject-7: 45 191 174;
+  --subject-7-soft: 217 250 245;
+  --subject-8: 56 189 220;
+  --subject-8-soft: 219 248 254;
 }
 
 .dark {
@@ -24,8 +43,25 @@
   --accent: 122 158 214;
   --accent-soft: 39 51 71;
   --status-unknown: 224 122 122;
-  --status-partial: 224 178 74;
+  --status-partial: 235 163 99;
   --status-mastered: 110 190 148;
+
+  --subject-1: 165 180 252;
+  --subject-1-soft: 49 46 129;
+  --subject-2: 196 181 253;
+  --subject-2-soft: 76 29 149;
+  --subject-3: 240 171 252;
+  --subject-3-soft: 112 26 117;
+  --subject-4: 249 168 212;
+  --subject-4-soft: 131 24 67;
+  --subject-5: 253 186 116;
+  --subject-5-soft: 124 45 18;
+  --subject-6: 190 230 100;
+  --subject-6-soft: 54 83 20;
+  --subject-7: 94 224 205;
+  --subject-7-soft: 19 78 74;
+  --subject-8: 125 220 245;
+  --subject-8-soft: 22 78 99;
 }
 
 * {

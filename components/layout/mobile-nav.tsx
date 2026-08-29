@@ -11,25 +11,25 @@ const NAV_ITEMS = [
     href: "/math/subjects",
     label: "전공수학",
     icon: Sigma,
-    match: (p: string) => p.startsWith("/math"),
+    match: (p: string) => p === "/math" || p.startsWith("/math/"),
   },
   {
     href: "/pedagogy/topics",
     label: "교육학",
     icon: GraduationCap,
-    match: (p: string) => p.startsWith("/pedagogy"),
+    match: (p: string) => p === "/pedagogy" || p.startsWith("/pedagogy/"),
   },
   {
     href: "/math-education/topics",
     label: "수학교육",
     icon: Shapes,
-    match: (p: string) => p.startsWith("/math-education"),
+    match: (p: string) => p === "/math-education" || p.startsWith("/math-education/"),
   },
   {
     href: "/settings",
     label: "설정",
     icon: Settings,
-    match: (p: string) => p.startsWith("/settings"),
+    match: (p: string) => p === "/settings" || p.startsWith("/settings/"),
   },
 ];
 

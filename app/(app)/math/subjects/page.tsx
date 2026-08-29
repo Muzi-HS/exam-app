@@ -1,13 +1,15 @@
-import { EmptyState } from "@/components/ui/empty-state";
+import { SubjectsManager } from "@/components/math/subjects-manager";
 
 export default function Page() {
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold text-text-primary">과목 관리</h2>
-      <EmptyState
-        title="아직 구현되지 않았습니다"
-        description="Phase 2에서 과목/소주제 CRUD 및 순서 변경 기능이 추가됩니다."
-      />
+      <div>
+        <h2 className="text-lg font-semibold text-text-primary">과목 관리</h2>
+        <p className="mt-1 text-sm text-text-secondary">
+          과목을 펼치면 단원을 관리할 수 있습니다. 드래그로 순서를 바꿀 수 있습니다.
+        </p>
+      </div>
+      <SubjectsManager />
     </div>
   );
 }

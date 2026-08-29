@@ -73,13 +73,45 @@ create table if not exists math_problems (
   is_favorite boolean not null default false,
   -- 연습/시험 출제 우선순위 계산용 캐시 컬럼 (Phase 3에서 사용)
   last_practiced_at timestamptz,
+  -- progress_history는 이력을 절대 수정하지 않는 append-only 로그이므로,
+  -- 목록 화면에서 상태별로 빠르게 표시/필터링하기 위한 캐시 컬럼입니다.
+  -- 이해도를 변경할 때마다 progress_history insert와 함께 이 컬럼도 갱신됩니다.
+  current_status text check (current_status in ('unknown', 'partial', 'mastered')),
+  -- 이해도를 선택(=문제를 풀었다고 기록)할 때마다 1씩 증가하는 캐시 컬럼입니다.
+  solve_count integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
+-- 이미 배포된 DB(Phase 1)에 Phase 2/4에서 추가된 컬럼을 반영하기 위한 안전한 마이그레이션.
+-- 위 create table이 이미 실행되어 테이블이 존재하는 경우에도 이 문장들만 추가로 적용됩니다.
+alter table math_problems add column if not exists current_status text
+  check (current_status in ('unknown', 'partial', 'mastered'));
+alter table math_problems add column if not exists solve_count integer not null default 0;
+
 create index if not exists idx_math_problems_topic on math_problems (topic_id);
 create index if not exists idx_math_problems_user on math_problems (user_id);
 create index if not exists idx_math_problems_favorite on math_problems (user_id, is_favorite);
+create index if not exists idx_math_problems_status on math_problems (user_id, current_status);
+-- 연습 모드의 "오래 학습하지 않은 문제 우선" 출제 정렬용
+create index if not exists idx_math_problems_last_practiced on math_problems (user_id, last_practiced_at);
+
+-- 이해도 선택("문제 풀이") 시 solve_count를 원자적으로 증가시킵니다.
+-- security definer가 아니므로 math_problems의 RLS(owner-only)가 그대로 적용됩니다.
+create or replace function increment_solve_count(p_problem_id uuid)
+returns integer as $$
+declare
+  new_count integer;
+begin
+  update math_problems
+  set solve_count = solve_count + 1
+  where id = p_problem_id
+  returning solve_count into new_count;
+  return new_count;
+end;
+$$ language plpgsql;
+
+grant execute on function increment_solve_count(uuid) to authenticated;
 create index if not exists idx_math_problems_title_trgm on math_problems using gin (title gin_trgm_ops);
 
 create table if not exists problem_images (

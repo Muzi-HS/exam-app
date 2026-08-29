@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, FileText, PenLine, Timer, History } from "lucide-react";
+import { BookOpen, FileText, PenLine, Timer, BarChart3 } from "lucide-react";
 import { DomainTabs } from "@/components/layout/domain-tabs";
 
 const TABS = [
@@ -8,7 +8,7 @@ const TABS = [
   { href: "/math/problems", label: "문제", icon: FileText },
   { href: "/math/practice", label: "연습", icon: PenLine },
   { href: "/math/exam", label: "시험", icon: Timer },
-  { href: "/math/history", label: "기록", icon: History },
+  { href: "/math/history", label: "통계", icon: BarChart3 },
 ];
 
 export default function MathLayout({ children }: { children: React.ReactNode }) {
