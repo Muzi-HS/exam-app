@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { SessionSetupForm } from "@/components/math/session-setup-form";
+import { ConceptSessionSetupForm } from "@/components/mindmap/concept-session-setup-form";
 import { SessionHistoryList } from "@/components/math/session-history-list";
 import { cn } from "@/lib/utils";
+import type { MindmapDomain } from "@/types/database";
 
-export default function Page() {
+export function ConceptExamPage({ domain }: { domain: MindmapDomain }) {
   const [tab, setTab] = useState<"new" | "history">("new");
 
   return (
@@ -13,7 +14,7 @@ export default function Page() {
       <div>
         <h2 className="text-lg font-semibold text-text-primary">시험 모드</h2>
         <p className="mt-1 text-sm text-text-secondary">
-          범위를 설정해 실전처럼 풀거나, 지난 기록을 확인하세요.
+          주제를 선택해 실전처럼 풀거나, 지난 기록을 확인하세요.
         </p>
       </div>
 
@@ -45,9 +46,9 @@ export default function Page() {
       </div>
 
       {tab === "new" ? (
-        <SessionSetupForm mode="exam" />
+        <ConceptSessionSetupForm domain={domain} mode="exam" />
       ) : (
-        <SessionHistoryList domain="math" modeFilter="exam" />
+        <SessionHistoryList domain={domain} modeFilter="exam" />
       )}
     </div>
   );

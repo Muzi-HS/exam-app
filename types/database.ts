@@ -203,6 +203,8 @@ export interface Database {
           memo: string | null;
           order_index: number;
           is_collapsed: boolean;
+          position_x: number | null;
+          position_y: number | null;
           last_practiced_at: string | null;
           created_at: string;
           updated_at: string;
@@ -219,6 +221,8 @@ export interface Database {
           memo?: string | null;
           order_index?: number;
           is_collapsed?: boolean;
+          position_x?: number | null;
+          position_y?: number | null;
         };
         Update: Partial<Database["public"]["Tables"]["mindmap_nodes"]["Insert"]>;
         Relationships: [

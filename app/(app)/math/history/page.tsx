@@ -19,7 +19,7 @@ export default function Page() {
 
       <div>
         <p className="mb-2 text-sm font-medium text-text-primary">연습 · 시험 세션</p>
-        <SessionHistoryList />
+        <SessionHistoryList domain="math" />
       </div>
 
       <div>

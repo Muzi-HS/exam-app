@@ -74,15 +74,14 @@ export function ProblemFilters({
           type="button"
           onClick={() => onChange({ ...value, favoriteOnly: !value.favoriteOnly })}
           aria-pressed={value.favoriteOnly}
+          aria-label="즐겨찾기만 보기"
+          title="즐겨찾기만 보기"
           className={cn(
-            "flex items-center gap-1.5 rounded-sm border px-3 py-1.5 text-sm font-medium transition-colors",
-            value.favoriteOnly
-              ? "border-accent bg-accent-soft text-accent"
-              : "border-border text-text-secondary hover:bg-accent-soft hover:text-text-primary"
+            "flex h-9 w-9 items-center justify-center rounded-full transition-colors",
+            value.favoriteOnly ? "text-accent" : "text-text-secondary hover:text-accent"
           )}
         >
-          <Star size={14} strokeWidth={1.75} fill={value.favoriteOnly ? "currentColor" : "none"} />
-          즐겨찾기만
+          <Star size={17} strokeWidth={1.75} fill={value.favoriteOnly ? "currentColor" : "none"} />
         </button>
       </div>
 

@@ -167,10 +167,17 @@ create table if not exists mindmap_nodes (
   memo text,
   order_index integer not null default 0,
   is_collapsed boolean not null default false,
+  -- PC 캔버스형 마인드맵에서 노드를 자유 배치한 좌표. null이면 자동 배치합니다.
+  position_x double precision,
+  position_y double precision,
   last_practiced_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- 이미 배포된 DB에 Phase 4에서 추가된 컬럼을 반영하기 위한 안전한 마이그레이션.
+alter table mindmap_nodes add column if not exists position_x double precision;
+alter table mindmap_nodes add column if not exists position_y double precision;
 
 create index if not exists idx_mindmap_nodes_topic on mindmap_nodes (topic_id);
 create index if not exists idx_mindmap_nodes_parent on mindmap_nodes (parent_node_id);

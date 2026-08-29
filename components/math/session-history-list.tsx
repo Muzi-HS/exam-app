@@ -7,20 +7,33 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate, formatDuration } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { SessionMode } from "@/types/database";
+import type { Domain, SessionMode } from "@/types/database";
 
 const MODE_LABEL: Record<SessionMode, string> = { practice: "연습", exam: "시험" };
 
-export function SessionHistoryList({ modeFilter }: { modeFilter?: SessionMode }) {
+const BASE_PATH: Record<Domain, string> = {
+  math: "/math",
+  pedagogy: "/pedagogy",
+  math_education: "/math-education",
+};
+
+export function SessionHistoryList({
+  domain,
+  modeFilter,
+}: {
+  domain: Domain;
+  modeFilter?: SessionMode;
+}) {
   const supabase = createClient();
+  const basePath = BASE_PATH[domain];
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["study-sessions", modeFilter ?? "all"],
+    queryKey: ["study-sessions", domain, modeFilter ?? "all"],
     queryFn: async () => {
       let query = supabase
         .from("study_sessions")
         .select("id, mode, item_count, started_at, ended_at")
-        .eq("domain", "math")
+        .eq("domain", domain)
         .order("started_at", { ascending: false });
       if (modeFilter) query = query.eq("mode", modeFilter);
       const { data, error } = await query;
@@ -49,7 +62,7 @@ export function SessionHistoryList({ modeFilter }: { modeFilter?: SessionMode })
   return (
     <div className="flex flex-col gap-2">
       {data.map((s) => (
-        <Link key={s.id} href={`/math/${s.mode}/${s.id}`}>
+        <Link key={s.id} href={`${basePath}/${s.mode}/${s.id}`}>
           <Card className="flex items-center justify-between transition-colors hover:border-accent">
             <div>
               <p className="text-sm font-medium text-text-primary">

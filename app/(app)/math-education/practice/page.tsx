@@ -1,10 +1,15 @@
-import { EmptyState } from "@/components/ui/empty-state";
+import { ConceptSessionSetupForm } from "@/components/mindmap/concept-session-setup-form";
 
 export default function Page() {
   return (
-    <EmptyState
-      title="아직 구현되지 않았습니다"
-      description="Phase 4에서 랜덤 연습 기능이 추가됩니다."
-    />
+    <div className="flex flex-col gap-4">
+      <div>
+        <h2 className="text-lg font-semibold text-text-primary">연습 모드</h2>
+        <p className="mt-1 text-sm text-text-secondary">
+          주제를 설정하고 한 문제씩 확인하며 해설을 확인하세요.
+        </p>
+      </div>
+      <ConceptSessionSetupForm domain="math_education" mode="practice" />
+    </div>
   );
 }
