@@ -17,11 +17,13 @@ export function NodeDetailPanel({
   allNodes,
   nodesQueryKey,
   onClose,
+  readOnly = false,
 }: {
   node: MindmapNode;
   allNodes: MindmapNode[];
   nodesQueryKey: unknown[];
   onClose: () => void;
+  readOnly?: boolean;
 }) {
   const supabase = createClient();
   const queryClient = useQueryClient();
@@ -54,6 +56,7 @@ export function NodeDetailPanel({
   const excludedIds = getDescendantIds(node.id, allNodes);
   excludedIds.add(node.id);
   const parentOptions = allNodes.filter((n) => !excludedIds.has(n.id));
+  const parentNode = node.parent_node_id ? allNodes.find((n) => n.id === node.parent_node_id) : null;
 
   async function handleSave() {
     if (!name.trim()) return;
@@ -99,16 +102,20 @@ export function NodeDetailPanel({
         className="relative flex max-h-[85vh] w-full flex-col gap-4 overflow-y-auto rounded-t-lg border-t border-border bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-subtle sm:h-full sm:max-h-none sm:w-[420px] sm:rounded-none sm:rounded-l-lg sm:border-l sm:border-t-0"
       >
         <div className="flex items-center justify-between">
-          <p className="text-sm font-medium text-text-secondary">개념 상세</p>
+          <p className="text-sm font-medium text-text-secondary">
+            {readOnly ? "개념 열람" : "개념 상세"}
+          </p>
           <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setConfirmingDelete(true)}
-              aria-label="개념 삭제"
-              className="flex h-10 w-10 items-center justify-center rounded-sm text-text-secondary hover:bg-accent-soft hover:text-status-unknown"
-            >
-              <Trash2 size={17} strokeWidth={1.75} />
-            </button>
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => setConfirmingDelete(true)}
+                aria-label="개념 삭제"
+                className="flex h-10 w-10 items-center justify-center rounded-sm text-text-secondary hover:bg-accent-soft hover:text-status-unknown"
+              >
+                <Trash2 size={17} strokeWidth={1.75} />
+              </button>
+            )}
             <button
               type="button"
               onClick={onClose}
@@ -120,46 +127,79 @@ export function NodeDetailPanel({
           </div>
         </div>
 
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-text-secondary">이름</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
+        {readOnly ? (
+          <div className="flex flex-col gap-3">
+            <div>
+              <p className="text-sm text-text-secondary">이름</p>
+              <p className="mt-1 text-sm text-text-primary">{node.name}</p>
+            </div>
+            {node.description && (
+              <div>
+                <p className="text-sm text-text-secondary">설명</p>
+                <p className="mt-1 whitespace-pre-wrap text-sm text-text-primary">{node.description}</p>
+              </div>
+            )}
+            {node.keywords && (
+              <div>
+                <p className="text-sm text-text-secondary">핵심 키워드</p>
+                <p className="mt-1 text-sm text-text-primary">{node.keywords}</p>
+              </div>
+            )}
+            {node.memo && (
+              <div>
+                <p className="text-sm text-text-secondary">메모</p>
+                <p className="mt-1 whitespace-pre-wrap text-sm text-text-primary">{node.memo}</p>
+              </div>
+            )}
+            {parentNode && (
+              <div>
+                <p className="text-sm text-text-secondary">상위 개념</p>
+                <p className="mt-1 text-sm text-text-primary">{parentNode.name}</p>
+              </div>
+            )}
           </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm text-text-secondary">이름</label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-text-secondary">설명</label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm text-text-secondary">설명</label>
+              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm text-text-secondary">핵심 키워드</label>
+              <Input value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="쉼표로 구분" />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm text-text-secondary">메모</label>
+              <Textarea value={memo} onChange={(e) => setMemo(e.target.value)} rows={3} />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm text-text-secondary">상위 개념</label>
+              <Select value={parentNodeId} onChange={(e) => setParentNodeId(e.target.value)}>
+                <option value="">(없음 — 최상위)</option>
+                {parentOptions.map((n) => (
+                  <option key={n.id} value={n.id}>
+                    {n.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            <Button type="button" onClick={handleSave} disabled={saving || !name.trim()}>
+              {saving ? "저장 중..." : "저장"}
+            </Button>
           </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-text-secondary">핵심 키워드</label>
-            <Input value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="쉼표로 구분" />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-text-secondary">메모</label>
-            <Textarea value={memo} onChange={(e) => setMemo(e.target.value)} rows={3} />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-text-secondary">상위 개념</label>
-            <Select value={parentNodeId} onChange={(e) => setParentNodeId(e.target.value)}>
-              <option value="">(없음 — 최상위)</option>
-              {parentOptions.map((n) => (
-                <option key={n.id} value={n.id}>
-                  {n.name}
-                </option>
-              ))}
-            </Select>
-          </div>
-
-          <Button type="button" onClick={handleSave} disabled={saving || !name.trim()}>
-            {saving ? "저장 중..." : "저장"}
-          </Button>
-        </div>
+        )}
 
         <div className="border-t border-border pt-3">
-          <ConceptQuestionsSection nodeId={node.id} />
+          <ConceptQuestionsSection nodeId={node.id} readOnly={readOnly} />
         </div>
       </div>
 

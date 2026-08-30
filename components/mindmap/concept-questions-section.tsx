@@ -15,7 +15,13 @@ interface ConceptQuestion {
   order_index: number;
 }
 
-export function ConceptQuestionsSection({ nodeId }: { nodeId: string }) {
+export function ConceptQuestionsSection({
+  nodeId,
+  readOnly = false,
+}: {
+  nodeId: string;
+  readOnly?: boolean;
+}) {
   const supabase = createClient();
   const queryClient = useQueryClient();
   const queryKey = ["concept-questions", nodeId];
@@ -77,7 +83,7 @@ export function ConceptQuestionsSection({ nodeId }: { nodeId: string }) {
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-text-primary">개념 문제</p>
-        {!adding && (
+        {!readOnly && !adding && (
           <Button type="button" variant="ghost" onClick={() => setAdding(true)}>
             <Plus size={15} strokeWidth={1.75} />
             문제 추가
@@ -93,11 +99,16 @@ export function ConceptQuestionsSection({ nodeId }: { nodeId: string }) {
 
       <div className="flex flex-col gap-2">
         {questions?.map((q) => (
-          <ConceptQuestionItem key={q.id} question={q} onDelete={() => handleDelete(q.id)} />
+          <ConceptQuestionItem
+            key={q.id}
+            question={q}
+            onDelete={() => handleDelete(q.id)}
+            readOnly={readOnly}
+          />
         ))}
       </div>
 
-      {adding && (
+      {!readOnly && adding && (
         <div className="flex flex-col gap-2 rounded-sm border border-border bg-bg p-3">
           <Textarea
             value={newQuestion}
@@ -147,9 +158,11 @@ export function ConceptQuestionsSection({ nodeId }: { nodeId: string }) {
 function ConceptQuestionItem({
   question,
   onDelete,
+  readOnly,
 }: {
   question: ConceptQuestion;
   onDelete: () => void;
+  readOnly: boolean;
 }) {
   const [showAnswer, setShowAnswer] = useState(false);
 
@@ -157,14 +170,16 @@ function ConceptQuestionItem({
     <div className="rounded-sm border border-border bg-bg p-3">
       <div className="flex items-start justify-between gap-2">
         <p className="whitespace-pre-wrap text-sm text-text-primary">{question.question}</p>
-        <button
-          type="button"
-          onClick={onDelete}
-          aria-label="문제 삭제"
-          className="-m-2 flex h-10 w-10 shrink-0 items-center justify-center text-text-secondary hover:text-status-unknown"
-        >
-          <Trash2 size={15} strokeWidth={1.75} />
-        </button>
+        {!readOnly && (
+          <button
+            type="button"
+            onClick={onDelete}
+            aria-label="문제 삭제"
+            className="-m-2 flex h-10 w-10 shrink-0 items-center justify-center text-text-secondary hover:text-status-unknown"
+          >
+            <Trash2 size={15} strokeWidth={1.75} />
+          </button>
+        )}
       </div>
 
       <button

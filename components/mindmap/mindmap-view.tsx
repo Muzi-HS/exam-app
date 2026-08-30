@@ -17,6 +17,8 @@ export function MindmapView({ domain, topicId }: { domain: MindmapDomain; topicI
   const supabase = createClient();
   const queryClient = useQueryClient();
   const isDesktop = useIsDesktop();
+  // 모바일에서는 열람 전용입니다 — 마인드맵 편집(생성/수정/삭제/이동)은 PC에서만 가능합니다.
+  const readOnly = !isDesktop;
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const queryKey = ["mindmap-nodes", topicId];
@@ -101,13 +103,24 @@ export function MindmapView({ domain, topicId }: { domain: MindmapDomain; topicI
 
   return (
     <div className="flex flex-col gap-3">
-      <Button type="button" variant="secondary" className="self-start" onClick={() => handleAddChild(null)}>
-        <Plus size={15} strokeWidth={1.75} />
-        최상위 개념 추가
-      </Button>
+      {readOnly && (
+        <p className="rounded-sm border border-border bg-accent-soft px-3 py-2 text-xs text-text-secondary">
+          모바일에서는 마인드맵을 열람만 할 수 있습니다. 편집하려면 PC에서 접속해 주세요.
+        </p>
+      )}
+
+      {!readOnly && (
+        <Button type="button" variant="secondary" className="self-start" onClick={() => handleAddChild(null)}>
+          <Plus size={15} strokeWidth={1.75} />
+          최상위 개념 추가
+        </Button>
+      )}
 
       {!nodes || nodes.length === 0 ? (
-        <EmptyState title="등록된 개념이 없습니다" description="위 버튼으로 최상위 개념을 추가해 보세요." />
+        <EmptyState
+          title="등록된 개념이 없습니다"
+          description={readOnly ? "PC에서 먼저 개념을 추가해 주세요." : "위 버튼으로 최상위 개념을 추가해 보세요."}
+        />
       ) : isDesktop ? (
         <MindmapCanvas
           nodes={nodes}
@@ -123,6 +136,7 @@ export function MindmapView({ domain, topicId }: { domain: MindmapDomain; topicI
           onToggleCollapse={handleToggleCollapse}
           onAddChild={handleAddChild}
           onMoveSibling={handleMoveSibling}
+          readOnly={readOnly}
         />
       )}
 
@@ -132,6 +146,7 @@ export function MindmapView({ domain, topicId }: { domain: MindmapDomain; topicI
           allNodes={nodes ?? []}
           nodesQueryKey={queryKey}
           onClose={() => setSelectedId(null)}
+          readOnly={readOnly}
         />
       )}
     </div>

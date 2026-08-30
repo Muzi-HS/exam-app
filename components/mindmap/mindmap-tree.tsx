@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { ChevronDown, ChevronRight, Plus, ArrowUp, ArrowDown } from "lucide-react";
 import type { MindmapNode } from "@/lib/mindmap";
+import { getSubjectColor, type SubjectColor } from "@/lib/subject-colors";
 import { cn } from "@/lib/utils";
 
 export function MindmapTree({
@@ -11,12 +12,14 @@ export function MindmapTree({
   onToggleCollapse,
   onAddChild,
   onMoveSibling,
+  readOnly = false,
 }: {
   nodes: MindmapNode[];
   onSelect: (id: string) => void;
   onToggleCollapse: (node: MindmapNode) => void;
   onAddChild: (parentId: string | null) => void;
   onMoveSibling: (node: MindmapNode, direction: "up" | "down") => void;
+  readOnly?: boolean;
 }) {
   const childrenByParent = useMemo(() => {
     const map = new Map<string, MindmapNode[]>();
@@ -45,6 +48,8 @@ export function MindmapTree({
           onMoveSibling={onMoveSibling}
           isFirst={i === 0}
           isLast={i === roots.length - 1}
+          readOnly={readOnly}
+          branchColor={getSubjectColor(i)}
         />
       ))}
     </div>
@@ -61,6 +66,8 @@ function TreeRow({
   onMoveSibling,
   isFirst,
   isLast,
+  readOnly,
+  branchColor,
 }: {
   node: MindmapNode;
   depth: number;
@@ -71,6 +78,10 @@ function TreeRow({
   onMoveSibling: (node: MindmapNode, direction: "up" | "down") => void;
   isFirst: boolean;
   isLast: boolean;
+  readOnly: boolean;
+  /** 최상위 개념(뿌리)마다 다른 파스텔 색을 배정해서, 하위 개념도 같은 색을 물려받아
+   * 어느 가지에 속하는지 들여쓰기만으로는 놓치기 쉬운 걸 색으로 바로 구분되게 합니다. */
+  branchColor: SubjectColor;
 }) {
   const children = childrenByParent.get(node.id) ?? [];
   const hasChildren = children.length > 0;
@@ -98,39 +109,48 @@ function TreeRow({
         <button
           type="button"
           onClick={() => onSelect(node.id)}
-          className="min-h-10 min-w-0 flex-1 whitespace-normal break-words rounded-sm px-2 py-2 text-left text-sm leading-snug text-text-primary hover:bg-accent-soft"
+          className={cn(
+            "min-h-10 min-w-0 flex-1 whitespace-normal break-words rounded-sm border px-2 py-2 text-left text-sm font-medium leading-snug transition-colors hover:opacity-80",
+            branchColor.border,
+            branchColor.soft,
+            branchColor.text
+          )}
         >
           {node.name}
         </button>
 
-        <button
-          type="button"
-          onClick={() => onMoveSibling(node, "up")}
-          disabled={isFirst}
-          aria-label="위로 이동"
-          className={cn(
-            "flex h-10 w-8 shrink-0 items-center justify-center rounded-sm text-text-secondary hover:bg-accent-soft disabled:opacity-30"
-          )}
-        >
-          <ArrowUp size={14} strokeWidth={1.75} />
-        </button>
-        <button
-          type="button"
-          onClick={() => onMoveSibling(node, "down")}
-          disabled={isLast}
-          aria-label="아래로 이동"
-          className="flex h-10 w-8 shrink-0 items-center justify-center rounded-sm text-text-secondary hover:bg-accent-soft disabled:opacity-30"
-        >
-          <ArrowDown size={14} strokeWidth={1.75} />
-        </button>
-        <button
-          type="button"
-          onClick={() => onAddChild(node.id)}
-          aria-label="하위 개념 추가"
-          className="flex h-10 w-8 shrink-0 items-center justify-center rounded-sm text-text-secondary hover:bg-accent-soft hover:text-accent"
-        >
-          <Plus size={15} strokeWidth={1.75} />
-        </button>
+        {!readOnly && (
+          <>
+            <button
+              type="button"
+              onClick={() => onMoveSibling(node, "up")}
+              disabled={isFirst}
+              aria-label="위로 이동"
+              className={cn(
+                "flex h-10 w-8 shrink-0 items-center justify-center rounded-sm text-text-secondary hover:bg-accent-soft disabled:opacity-30"
+              )}
+            >
+              <ArrowUp size={14} strokeWidth={1.75} />
+            </button>
+            <button
+              type="button"
+              onClick={() => onMoveSibling(node, "down")}
+              disabled={isLast}
+              aria-label="아래로 이동"
+              className="flex h-10 w-8 shrink-0 items-center justify-center rounded-sm text-text-secondary hover:bg-accent-soft disabled:opacity-30"
+            >
+              <ArrowDown size={14} strokeWidth={1.75} />
+            </button>
+            <button
+              type="button"
+              onClick={() => onAddChild(node.id)}
+              aria-label="하위 개념 추가"
+              className="flex h-10 w-8 shrink-0 items-center justify-center rounded-sm text-text-secondary hover:bg-accent-soft hover:text-accent"
+            >
+              <Plus size={15} strokeWidth={1.75} />
+            </button>
+          </>
+        )}
       </div>
 
       {!node.is_collapsed &&
@@ -146,6 +166,8 @@ function TreeRow({
             onMoveSibling={onMoveSibling}
             isFirst={i === 0}
             isLast={i === children.length - 1}
+            readOnly={readOnly}
+            branchColor={branchColor}
           />
         ))}
     </div>
