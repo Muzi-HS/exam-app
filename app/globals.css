@@ -32,6 +32,14 @@
   --subject-7-soft: 217 250 245;
   --subject-8: 56 189 220;
   --subject-8-soft: 219 248 254;
+  --subject-9: 56 189 248;
+  --subject-9-soft: 224 242 254;
+  --subject-10: 52 211 153;
+  --subject-10-soft: 209 250 229;
+  --subject-11: 251 191 36;
+  --subject-11-soft: 254 243 199;
+  --subject-12: 192 132 252;
+  --subject-12-soft: 243 232 255;
 }
 
 .dark {
@@ -62,6 +70,14 @@
   --subject-7-soft: 19 78 74;
   --subject-8: 125 220 245;
   --subject-8-soft: 22 78 99;
+  --subject-9: 125 211 252;
+  --subject-9-soft: 12 74 110;
+  --subject-10: 110 231 183;
+  --subject-10-soft: 6 78 59;
+  --subject-11: 252 211 77;
+  --subject-11-soft: 120 53 15;
+  --subject-12: 216 180 254;
+  --subject-12-soft: 88 28 135;
 }
 
 * {

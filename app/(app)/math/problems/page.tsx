@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, ChevronLeft, ChevronRight, ListChecks, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ProblemFilters, type ProblemFiltersState } from "@/components/math/problem-filters";
 import { ProblemRow, type ProblemListItem } from "@/components/math/problem-row";
@@ -14,6 +15,14 @@ import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { createStudySession } from "@/lib/study-session";
 
 const PAGE_SIZE = 24;
+
+type SortBy = "subject" | "title" | "problem_number";
+
+const SORT_OPTIONS: { value: SortBy; label: string }[] = [
+  { value: "subject", label: "과목순" },
+  { value: "title", label: "제목순" },
+  { value: "problem_number", label: "문제번호순" },
+];
 
 const DEFAULT_FILTERS: ProblemFiltersState = {
   subjectIds: [],
@@ -34,6 +43,7 @@ interface ProblemQueryRow {
     id: string;
     name: string;
     subject_id: string;
+    order_index: number;
     math_subjects: { id: string; name: string; order_index: number };
   };
 }
@@ -43,6 +53,7 @@ export default function ProblemsPage() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const [filters, setFilters] = useState<ProblemFiltersState>(DEFAULT_FILTERS);
+  const [sortBy, setSortBy] = useState<SortBy>("subject");
   const [page, setPage] = useState(0);
   const debouncedSearch = useDebouncedValue(filters.search, 300);
 
@@ -58,6 +69,7 @@ export default function ProblemsPage() {
     filters.tagIds.join(","),
     filters.favoriteOnly,
     debouncedSearch,
+    sortBy,
     page,
   ];
 
@@ -67,14 +79,21 @@ export default function ProblemsPage() {
       const hasTagFilter = filters.tagIds.length > 0;
       const selectCols =
         "id, title, is_favorite, current_status, problem_number," +
-        " math_topics!inner(id, name, subject_id, math_subjects!inner(id, name, order_index))" +
+        " math_topics!inner(id, name, subject_id, order_index, math_subjects!inner(id, name, order_index))" +
         (hasTagFilter ? ", problem_tags!inner(tag_id)" : "");
 
-      let query = supabase
-        .from("math_problems")
-        .select(selectCols, { count: "exact" })
-        .order("created_at", { ascending: false })
-        .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+      // 과목순은 "과목 order_index -> 단원 order_index" 두 단계 정렬이 필요한데,
+      // PostgREST는 두 단계 이상 중첩된 참조 테이블 정렬(order=a(b(c)))을 지원하지 않아
+      // (400 파싱 에러) 필터에 맞는 전체 목록을 가져와 클라이언트에서 직접 정렬/페이지네이션합니다.
+      let query = supabase.from("math_problems").select(selectCols, { count: "exact" });
+
+      if (sortBy === "title") {
+        query = query.order("title", { ascending: true });
+      } else if (sortBy === "problem_number") {
+        query = query.order("problem_number", { ascending: true, nullsFirst: false });
+      } else {
+        query = query.order("title", { ascending: true });
+      }
 
       if (debouncedSearch) query = query.ilike("title", `%${debouncedSearch}%`);
       if (filters.favoriteOnly) query = query.eq("is_favorite", true);
@@ -91,10 +110,29 @@ export default function ProblemsPage() {
       if (filters.topicIds.length > 0) query = query.in("topic_id", filters.topicIds);
       if (hasTagFilter) query = query.in("problem_tags.tag_id", filters.tagIds);
 
+      if (sortBy !== "subject") {
+        query = query.range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+      }
+
       const { data, count, error } = await query.returns<ProblemQueryRow[]>();
       if (error) throw error;
 
-      const items: ProblemListItem[] = (data ?? []).map((row) => ({
+      let rows = data ?? [];
+      let total = count ?? 0;
+
+      if (sortBy === "subject") {
+        rows = [...rows].sort((a, b) => {
+          const subjectDiff = a.math_topics.math_subjects.order_index - b.math_topics.math_subjects.order_index;
+          if (subjectDiff !== 0) return subjectDiff;
+          const topicDiff = a.math_topics.order_index - b.math_topics.order_index;
+          if (topicDiff !== 0) return topicDiff;
+          return a.title.localeCompare(b.title, "ko");
+        });
+        total = rows.length;
+        rows = rows.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+      }
+
+      const items: ProblemListItem[] = rows.map((row) => ({
         id: row.id,
         title: row.title,
         is_favorite: row.is_favorite,
@@ -105,7 +143,7 @@ export default function ProblemsPage() {
         topicName: row.math_topics.name,
       }));
 
-      return { items, total: count ?? 0 };
+      return { items, total };
     },
     placeholderData: (prev) => prev,
   });
@@ -205,6 +243,26 @@ export default function ProblemsPage() {
           setPage(0);
         }}
       />
+
+      <div className="flex items-center justify-end gap-2">
+        <label htmlFor="problem-sort" className="text-xs text-text-secondary">
+          정렬
+        </label>
+        <Select
+          id="problem-sort"
+          value={sortBy}
+          onChange={(e) => {
+            setSortBy(e.target.value as SortBy);
+            setPage(0);
+          }}
+        >
+          {SORT_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </Select>
+      </div>
 
       {error ? (
         <EmptyState

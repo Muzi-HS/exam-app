@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { ChevronDown, ChevronRight, Plus, ArrowUp, ArrowDown } from "lucide-react";
 import type { MindmapNode } from "@/lib/mindmap";
-import { getSubjectColor, type SubjectColor } from "@/lib/subject-colors";
+import { getBranchTone } from "@/lib/subject-colors";
 import { cn } from "@/lib/utils";
 
 export function MindmapTree({
@@ -49,7 +49,7 @@ export function MindmapTree({
           isFirst={i === 0}
           isLast={i === roots.length - 1}
           readOnly={readOnly}
-          branchColor={getSubjectColor(i)}
+          colorIndex={i}
         />
       ))}
     </div>
@@ -67,7 +67,7 @@ function TreeRow({
   isFirst,
   isLast,
   readOnly,
-  branchColor,
+  colorIndex,
 }: {
   node: MindmapNode;
   depth: number;
@@ -79,12 +79,13 @@ function TreeRow({
   isFirst: boolean;
   isLast: boolean;
   readOnly: boolean;
-  /** 최상위 개념(뿌리)마다 다른 파스텔 색을 배정해서, 하위 개념도 같은 색을 물려받아
-   * 어느 가지에 속하는지 들여쓰기만으로는 놓치기 쉬운 걸 색으로 바로 구분되게 합니다. */
-  branchColor: SubjectColor;
+  /** 최상위 개념(뿌리)마다 다른 파스텔 색을 배정해서, 하위 개념도 같은 색을 물려받습니다.
+   * 실제 톤은 깊이에 따라 옅어지도록 getBranchTone에서 매번 계산합니다. */
+  colorIndex: number;
 }) {
   const children = childrenByParent.get(node.id) ?? [];
   const hasChildren = children.length > 0;
+  const tone = getBranchTone(colorIndex, depth);
 
   return (
     <div>
@@ -111,9 +112,9 @@ function TreeRow({
           onClick={() => onSelect(node.id)}
           className={cn(
             "min-h-10 min-w-0 flex-1 whitespace-normal break-words rounded-sm border px-2 py-2 text-left text-sm font-medium leading-snug transition-colors hover:opacity-80",
-            branchColor.border,
-            branchColor.soft,
-            branchColor.text
+            tone.border,
+            tone.bg,
+            tone.text
           )}
         >
           {node.name}
@@ -167,7 +168,7 @@ function TreeRow({
             isFirst={i === 0}
             isLast={i === children.length - 1}
             readOnly={readOnly}
-            branchColor={branchColor}
+            colorIndex={colorIndex}
           />
         ))}
     </div>
