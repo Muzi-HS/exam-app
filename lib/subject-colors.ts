@@ -28,51 +28,48 @@ export function getSubjectColor(orderIndex: number): SubjectColor {
   return SUBJECT_PALETTE[i];
 }
 
-// 마인드맵 트리에서 깊이가 깊어질수록 색이 옅어지도록 쓰는 단계별 톤입니다.
-// depth 0(뿌리)은 SUBJECT_PALETTE와 같은 진한 톤, 1단계·2단계 이상은 아래 표를 씁니다.
+// 마인드맵 트리에서 깊이가 깊어질수록 "배경색만" 옅어지도록 쓰는 단계별 톤입니다.
+// 글씨(text)와 테두리(border)는 가독성을 위해 깊이와 상관없이 항상 진한 기본 톤을 씁니다.
 export interface BranchTone {
   text: string;
   border: string;
   bg: string;
 }
 
-const BRANCH_TIER_1: BranchTone[] = [
-  { text: "text-subject-1/80", border: "border-subject-1/55", bg: "bg-subject-1/10" },
-  { text: "text-subject-2/80", border: "border-subject-2/55", bg: "bg-subject-2/10" },
-  { text: "text-subject-3/80", border: "border-subject-3/55", bg: "bg-subject-3/10" },
-  { text: "text-subject-4/80", border: "border-subject-4/55", bg: "bg-subject-4/10" },
-  { text: "text-subject-5/80", border: "border-subject-5/55", bg: "bg-subject-5/10" },
-  { text: "text-subject-6/80", border: "border-subject-6/55", bg: "bg-subject-6/10" },
-  { text: "text-subject-7/80", border: "border-subject-7/55", bg: "bg-subject-7/10" },
-  { text: "text-subject-8/80", border: "border-subject-8/55", bg: "bg-subject-8/10" },
-  { text: "text-subject-9/80", border: "border-subject-9/55", bg: "bg-subject-9/10" },
-  { text: "text-subject-10/80", border: "border-subject-10/55", bg: "bg-subject-10/10" },
-  { text: "text-subject-11/80", border: "border-subject-11/55", bg: "bg-subject-11/10" },
-  { text: "text-subject-12/80", border: "border-subject-12/55", bg: "bg-subject-12/10" },
+const BG_TIER_1: string[] = [
+  "bg-subject-1/10",
+  "bg-subject-2/10",
+  "bg-subject-3/10",
+  "bg-subject-4/10",
+  "bg-subject-5/10",
+  "bg-subject-6/10",
+  "bg-subject-7/10",
+  "bg-subject-8/10",
+  "bg-subject-9/10",
+  "bg-subject-10/10",
+  "bg-subject-11/10",
+  "bg-subject-12/10",
 ];
 
-const BRANCH_TIER_2: BranchTone[] = [
-  { text: "text-subject-1/55", border: "border-subject-1/30", bg: "bg-subject-1/5" },
-  { text: "text-subject-2/55", border: "border-subject-2/30", bg: "bg-subject-2/5" },
-  { text: "text-subject-3/55", border: "border-subject-3/30", bg: "bg-subject-3/5" },
-  { text: "text-subject-4/55", border: "border-subject-4/30", bg: "bg-subject-4/5" },
-  { text: "text-subject-5/55", border: "border-subject-5/30", bg: "bg-subject-5/5" },
-  { text: "text-subject-6/55", border: "border-subject-6/30", bg: "bg-subject-6/5" },
-  { text: "text-subject-7/55", border: "border-subject-7/30", bg: "bg-subject-7/5" },
-  { text: "text-subject-8/55", border: "border-subject-8/30", bg: "bg-subject-8/5" },
-  { text: "text-subject-9/55", border: "border-subject-9/30", bg: "bg-subject-9/5" },
-  { text: "text-subject-10/55", border: "border-subject-10/30", bg: "bg-subject-10/5" },
-  { text: "text-subject-11/55", border: "border-subject-11/30", bg: "bg-subject-11/5" },
-  { text: "text-subject-12/55", border: "border-subject-12/30", bg: "bg-subject-12/5" },
+const BG_TIER_2: string[] = [
+  "bg-subject-1/5",
+  "bg-subject-2/5",
+  "bg-subject-3/5",
+  "bg-subject-4/5",
+  "bg-subject-5/5",
+  "bg-subject-6/5",
+  "bg-subject-7/5",
+  "bg-subject-8/5",
+  "bg-subject-9/5",
+  "bg-subject-10/5",
+  "bg-subject-11/5",
+  "bg-subject-12/5",
 ];
 
 export function getBranchTone(orderIndex: number, depth: number): BranchTone {
   const len = SUBJECT_PALETTE.length;
   const i = ((orderIndex % len) + len) % len;
-  if (depth <= 0) {
-    const base = SUBJECT_PALETTE[i];
-    return { text: base.text, border: base.border, bg: base.soft };
-  }
-  if (depth === 1) return BRANCH_TIER_1[i];
-  return BRANCH_TIER_2[i];
+  const base = SUBJECT_PALETTE[i];
+  const bg = depth <= 0 ? base.soft : depth === 1 ? BG_TIER_1[i] : BG_TIER_2[i];
+  return { text: base.text, border: base.border, bg };
 }
