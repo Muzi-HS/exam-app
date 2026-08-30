@@ -137,6 +137,7 @@ export default function ProblemDetailPage() {
       );
       queryClient.invalidateQueries({ queryKey: ["math-problems"] });
       queryClient.invalidateQueries({ queryKey: ["progress-history", problemId] });
+      queryClient.invalidateQueries({ queryKey: ["subject-stats"] });
     } finally {
       setStatusPending(false);
     }

@@ -1,7 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, MindmapDomain } from "@/types/database";
 
-export type StudySessionRow = Database["public"]["Tables"]["study_sessions"]["Row"];
+// 진행/결과 화면에서 실제로 쓰는 필드만 골라 select 하기 위한 좁은 타입입니다.
+export interface StudySessionMeta {
+  id: string;
+  time_limit_seconds: number | null;
+  started_at: string;
+  ended_at: string | null;
+}
 
 export async function fetchCandidateQuestionIds(
   supabase: SupabaseClient<Database>,
@@ -86,10 +92,10 @@ export interface ConceptSessionItem {
 export async function fetchConceptSessionWithItems(
   supabase: SupabaseClient<Database>,
   sessionId: string
-): Promise<{ session: StudySessionRow; items: ConceptSessionItem[] }> {
+): Promise<{ session: StudySessionMeta; items: ConceptSessionItem[] }> {
   const { data: session, error: sessionError } = await supabase
     .from("study_sessions")
-    .select("*")
+    .select("id, time_limit_seconds, started_at, ended_at")
     .eq("id", sessionId)
     .single();
   if (sessionError || !session) throw sessionError ?? new Error("세션을 찾을 수 없습니다.");

@@ -37,6 +37,8 @@ interface SortableNameListProps<T extends SortableNameItem> {
   creating?: boolean;
   renderExtra?: (item: T) => React.ReactNode;
   renderLeading?: (item: T) => React.ReactNode;
+  /** 지정하면 이름 부분을 눌렀을 때 수정 모드 대신 이 콜백이 호출됩니다 (예: 상세 화면으로 이동). */
+  onItemClick?: (item: T) => void;
 }
 
 export function SortableNameList<T extends SortableNameItem>({
@@ -49,6 +51,7 @@ export function SortableNameList<T extends SortableNameItem>({
   creating,
   renderExtra,
   renderLeading,
+  onItemClick,
 }: SortableNameListProps<T>) {
   const [localItems, setLocalItems] = useState(items);
   const [newName, setNewName] = useState("");
@@ -99,6 +102,7 @@ export function SortableNameList<T extends SortableNameItem>({
                 onRequestDelete={onRequestDelete}
                 renderExtra={renderExtra}
                 renderLeading={renderLeading}
+                onItemClick={onItemClick}
               />
             ))}
           </div>
@@ -128,12 +132,14 @@ function SortableRow<T extends SortableNameItem>({
   onRequestDelete,
   renderExtra,
   renderLeading,
+  onItemClick,
 }: {
   item: T;
   onRename: (id: string, name: string) => Promise<void>;
   onRequestDelete: (item: T) => void;
   renderExtra?: (item: T) => React.ReactNode;
   renderLeading?: (item: T) => React.ReactNode;
+  onItemClick?: (item: T) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
@@ -217,7 +223,17 @@ function SortableRow<T extends SortableNameItem>({
         </form>
       ) : (
         <>
-          <span className="flex-1 truncate text-sm text-text-primary">{item.name}</span>
+          {onItemClick ? (
+            <button
+              type="button"
+              onClick={() => onItemClick(item)}
+              className="min-h-10 flex-1 truncate text-left text-sm text-text-primary hover:text-accent"
+            >
+              {item.name}
+            </button>
+          ) : (
+            <span className="flex-1 truncate text-sm text-text-primary">{item.name}</span>
+          )}
           {renderExtra?.(item)}
           <Button
             type="button"

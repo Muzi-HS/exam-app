@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -31,7 +31,7 @@ const schema = z.object({
     .string()
     .optional()
     .refine(
-      (v) => !v || /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//.test(v),
+      (v) => !v || /^https?:\/\/(www\.|m\.)?(youtube\.com|youtu\.be)\//.test(v),
       "유효한 유튜브 URL이 아닙니다"
     ),
 });
@@ -72,6 +72,7 @@ export function ProblemForm({
 }) {
   const supabase = createClient();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const isEdit = mode === "edit" && !!problemId;
 
   const { data: subjects, isLoading: subjectsLoading } = useQuery({
@@ -247,7 +248,9 @@ export function ProblemForm({
 
       await syncTags(newProblemId, userId, [], tags);
 
+      queryClient.invalidateQueries({ queryKey: ["math-problems"] });
       router.push(`/math/problems/${newProblemId}`);
+      router.refresh();
     } catch {
       // 이미지/태그 저장 중 실패 시, 방금 만든 문제와 업로드된 이미지를 정리합니다.
       await removeProblemImages(supabase, uploadedPaths);
@@ -314,7 +317,10 @@ export function ProblemForm({
 
       await syncTags(targetId, userId, originalTags, tags);
 
+      queryClient.invalidateQueries({ queryKey: ["math-problems"] });
+      queryClient.invalidateQueries({ queryKey: ["math-problem", targetId] });
       router.push(`/math/problems/${targetId}`);
+      router.refresh();
     } catch {
       setSubmitError("수정 내용을 저장하지 못했습니다. 다시 시도해 주세요.");
       setProgress(null);

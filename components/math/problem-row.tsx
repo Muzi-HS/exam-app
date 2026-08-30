@@ -71,15 +71,16 @@ export function ProblemRow({
       </span>
       <span className="hidden shrink-0 text-xs text-text-secondary sm:inline">{problem.topicName}</span>
 
-      <span className="min-w-0 flex-1 truncate text-sm font-medium text-text-primary">
-        {problem.title}
-      </span>
-
-      {problem.problem_number && (
-        <span className="hidden shrink-0 font-mono text-xs text-text-secondary sm:inline">
-          {problem.problem_number}
+      <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
+        <span className="min-w-0 truncate text-sm font-medium text-text-primary">
+          {problem.title}
         </span>
-      )}
+        {problem.problem_number && (
+          <span className="shrink-0 font-mono text-xs text-text-secondary">
+            {problem.problem_number}
+          </span>
+        )}
+      </span>
 
       <StatusPill status={problem.current_status} />
     </div>

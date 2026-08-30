@@ -119,6 +119,7 @@ export default function ProblemsPage() {
           : prev
     );
     await supabase.from("math_problems").update({ is_favorite: next }).eq("id", id);
+    queryClient.invalidateQueries({ queryKey: ["math-problem", id] });
   }
 
   function toggleSelect(id: string) {

@@ -79,6 +79,10 @@ export default function PracticeSessionPage() {
               }
             : prev
       );
+      queryClient.invalidateQueries({ queryKey: ["math-problems"] });
+      queryClient.invalidateQueries({ queryKey: ["subject-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["progress-history", item.item_id] });
+      queryClient.invalidateQueries({ queryKey: ["math-problem", item.item_id] });
     } finally {
       setStatusPending(false);
     }

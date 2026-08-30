@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { getPublicImageUrl } from "@/lib/supabase/storage";
@@ -21,6 +22,7 @@ export function ExamResultItem({
   onRated: (itemId: string, status: ProblemStatus, solveCount: number) => void;
 }) {
   const supabase = createClient();
+  const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
   const [pending, setPending] = useState(false);
 
@@ -50,6 +52,10 @@ export function ExamResultItem({
         .update({ self_rating: status, answered_at: recordedAt })
         .eq("id", item.id);
       onRated(item.id, status, solveCount);
+      queryClient.invalidateQueries({ queryKey: ["math-problems"] });
+      queryClient.invalidateQueries({ queryKey: ["subject-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["progress-history", item.item_id] });
+      queryClient.invalidateQueries({ queryKey: ["math-problem", item.item_id] });
     } finally {
       setPending(false);
     }

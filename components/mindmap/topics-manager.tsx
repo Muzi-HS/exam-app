@@ -126,6 +126,7 @@ export function TopicsManager({ domain }: { domain: MindmapDomain }) {
         onReorder={handleReorder}
         onRequestDelete={handleRequestDelete}
         createPlaceholder="새 주제 이름"
+        onItemClick={(topic) => router.push(`${basePath}/topics/${topic.id}`)}
         renderExtra={(topic) => (
           <Button
             type="button"

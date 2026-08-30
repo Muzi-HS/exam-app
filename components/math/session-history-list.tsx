@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate, formatDuration } from "@/lib/format";
@@ -17,6 +19,8 @@ const BASE_PATH: Record<Domain, string> = {
   math_education: "/math-education",
 };
 
+const PAGE_SIZE = 30;
+
 export function SessionHistoryList({
   domain,
   modeFilter,
@@ -26,15 +30,17 @@ export function SessionHistoryList({
 }) {
   const supabase = createClient();
   const basePath = BASE_PATH[domain];
+  const [limit, setLimit] = useState(PAGE_SIZE);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["study-sessions", domain, modeFilter ?? "all"],
+    queryKey: ["study-sessions", domain, modeFilter ?? "all", limit],
     queryFn: async () => {
       let query = supabase
         .from("study_sessions")
         .select("id, mode, item_count, started_at, ended_at")
         .eq("domain", domain)
-        .order("started_at", { ascending: false });
+        .order("started_at", { ascending: false })
+        .limit(limit);
       if (modeFilter) query = query.eq("mode", modeFilter);
       const { data, error } = await query;
       if (error) throw error;
@@ -93,6 +99,17 @@ export function SessionHistoryList({
           </Card>
         </Link>
       ))}
+
+      {data.length >= limit && (
+        <Button
+          type="button"
+          variant="secondary"
+          className="self-center"
+          onClick={() => setLimit((l) => l + PAGE_SIZE)}
+        >
+          더 보기
+        </Button>
+      )}
     </div>
   );
 }
