@@ -4,9 +4,13 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useIsDesktop } from "@/lib/hooks/use-is-desktop";
 import { cn } from "@/lib/utils";
 
-const WEEKS = 53;
+// 모바일은 가로 스크롤 없이 화면 안에 다 들어오도록 주 수를 줄여서 보여줍니다
+// (마인드맵이 PC/모바일에서 아예 다른 구조로 보이는 것과 같은 방식).
+const DESKTOP_WEEKS = 53;
+const MOBILE_WEEKS = 14;
 const CELL = 16;
 const GAP = 4;
 const DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -44,19 +48,21 @@ function startOfDay(date: Date): Date {
 
 export function StudyHeatmap() {
   const supabase = createClient();
+  const isDesktop = useIsDesktop();
+  const weekCount = isDesktop ? DESKTOP_WEEKS : MOBILE_WEEKS;
 
   const today = useMemo(() => startOfDay(new Date()), []);
-  // 오늘이 포함된 주가 마지막 열이 되도록, 그 주의 일요일에서 WEEKS-1주 전 일요일까지 그립니다.
+  // 오늘이 포함된 주가 마지막 열이 되도록, 그 주의 일요일에서 weekCount-1주 전 일요일까지 그립니다.
   const gridStart = useMemo(() => {
     const currentWeekStart = new Date(today);
     currentWeekStart.setDate(today.getDate() - today.getDay());
     const start = new Date(currentWeekStart);
-    start.setDate(currentWeekStart.getDate() - (WEEKS - 1) * 7);
+    start.setDate(currentWeekStart.getDate() - (weekCount - 1) * 7);
     return start;
-  }, [today]);
+  }, [today, weekCount]);
 
   const { data: counts, isLoading, error } = useQuery({
-    queryKey: ["study-heatmap", toLocalDateKey(gridStart)],
+    queryKey: ["study-heatmap", toLocalDateKey(gridStart), weekCount],
     queryFn: async () => {
       const {
         data: { user },
@@ -82,7 +88,7 @@ export function StudyHeatmap() {
 
   const weeks = useMemo(() => {
     const cols: { date: Date; key: string }[][] = [];
-    for (let w = 0; w < WEEKS; w++) {
+    for (let w = 0; w < weekCount; w++) {
       const col: { date: Date; key: string }[] = [];
       for (let d = 0; d < 7; d++) {
         const date = new Date(gridStart);
@@ -92,7 +98,7 @@ export function StudyHeatmap() {
       cols.push(col);
     }
     return cols;
-  }, [gridStart]);
+  }, [gridStart, weekCount]);
 
   // 그 주의 월요일이 매달 1~7일 사이에 있을 때만, 그리고 달이 바뀌는 시점에만 라벨을 답니다.
   const monthLabels = useMemo(
@@ -121,7 +127,9 @@ export function StudyHeatmap() {
   return (
     <div className="flex flex-col gap-2">
       <p className="font-mono text-xs text-text-secondary">
-        {isLoading ? "불러오는 중..." : `최근 1년간 ${total}회 (문제 풀이 · 이해도 체크)`}
+        {isLoading
+          ? "불러오는 중..."
+          : `최근 ${isDesktop ? "1년간" : `${weekCount}주간`} ${total}회 (문제 풀이 · 이해도 체크)`}
       </p>
 
       <div className="overflow-x-auto pb-1">
