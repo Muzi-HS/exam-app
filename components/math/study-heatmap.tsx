@@ -59,12 +59,22 @@ export function StudyHeatmap() {
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const observer = new ResizeObserver((entries) => {
-      const width = entries[0]?.contentRect.width;
-      if (width) setContainerWidth(width);
-    });
+
+    function measure() {
+      if (el) setContainerWidth(el.getBoundingClientRect().width);
+    }
+
+    measure();
+    // ResizeObserver가 사이드바 접기/펼치기 같은 "창 크기는 그대로인데 이 요소의
+    // 폭만 바뀌는" 경우까지 잡아주고, window resize 이벤트를 겹쳐서 브라우저별
+    // ResizeObserver 타이밍 차이에 상관없이 항상 반응하도록 이중으로 감시합니다.
+    const observer = new ResizeObserver(() => measure());
     observer.observe(el);
-    return () => observer.disconnect();
+    window.addEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
   }, []);
 
   // 폭을 측정하기 전(첫 렌더/서버 렌더)에는 최대치로 그려두고, 측정되는 즉시 맞춰 줄입니다.
@@ -151,58 +161,63 @@ export function StudyHeatmap() {
           : `최근 ${weekCount >= MAX_WEEKS ? "1년간" : `${weekCount}주간`} ${total}회 (문제 풀이 · 이해도 체크)`}
       </p>
 
-      <div ref={containerRef} className="w-full overflow-x-auto pb-1">
-        <div style={{ display: "flex", gap: GAP }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: GAP, marginTop: 22 }}>
-            {DAY_LABELS.map((label, i) => (
-              <span
-                key={label}
-                style={{ height: CELL, lineHeight: `${CELL}px` }}
-                className="w-5 text-xs text-text-secondary"
-              >
-                {i % 2 === 1 ? label : ""}
-              </span>
-            ))}
-          </div>
-
-          <div>
-            <div style={{ display: "flex", gap: GAP, height: 18 }}>
-              {weeks.map((col, i) => (
+      <div ref={containerRef} className="w-full">
+        <div className="overflow-x-auto pb-1">
+          <div style={{ display: "flex", gap: GAP }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: GAP, marginTop: 22 }}>
+              {DAY_LABELS.map((label, i) => (
                 <span
-                  key={col[0].key}
-                  style={{ width: CELL }}
-                  className="whitespace-nowrap text-xs text-text-secondary"
+                  key={label}
+                  style={{ height: CELL, lineHeight: `${CELL}px` }}
+                  className="w-5 text-xs text-text-secondary"
                 >
-                  {monthLabels[i] ?? ""}
+                  {i % 2 === 1 ? label : ""}
                 </span>
               ))}
             </div>
 
-            <div style={{ display: "flex", gap: GAP }}>
-              {weeks.map((col) => (
-                <div key={col[0].key} style={{ display: "flex", flexDirection: "column", gap: GAP }}>
-                  {col.map(({ date, key }) => {
-                    const isFuture = date > today;
-                    const count = counts?.get(key) ?? 0;
-                    return (
-                      <div
-                        key={key}
-                        title={isFuture ? undefined : `${key} · ${count}회`}
-                        style={{ width: CELL, height: CELL }}
-                        className={cn("rounded-[3px]", isFuture ? "bg-transparent" : LEVEL_CLASS[levelFor(count)])}
-                      />
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
+            <div>
+              <div style={{ display: "flex", gap: GAP, height: 18 }}>
+                {weeks.map((col, i) => (
+                  <span
+                    key={col[0].key}
+                    style={{ width: CELL }}
+                    className="whitespace-nowrap text-xs text-text-secondary"
+                  >
+                    {monthLabels[i] ?? ""}
+                  </span>
+                ))}
+              </div>
 
-            <div style={{ display: "flex", gap: GAP, marginTop: 8 }} className="items-center">
-              <span className="text-xs text-text-secondary">적음</span>
-              {LEVEL_CLASS.map((cls, i) => (
-                <div key={i} style={{ width: CELL, height: CELL }} className={cn("rounded-[3px]", cls)} />
-              ))}
-              <span className="text-xs text-text-secondary">많음</span>
+              <div style={{ display: "flex", gap: GAP }}>
+                {weeks.map((col) => (
+                  <div key={col[0].key} style={{ display: "flex", flexDirection: "column", gap: GAP }}>
+                    {col.map(({ date, key }) => {
+                      const isFuture = date > today;
+                      const count = counts?.get(key) ?? 0;
+                      return (
+                        <div
+                          key={key}
+                          title={isFuture ? undefined : `${key} · ${count}회`}
+                          style={{ width: CELL, height: CELL }}
+                          className={cn(
+                            "rounded-[3px]",
+                            isFuture ? "bg-transparent" : LEVEL_CLASS[levelFor(count)]
+                          )}
+                        />
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ display: "flex", gap: GAP, marginTop: 8 }} className="items-center">
+                <span className="text-xs text-text-secondary">적음</span>
+                {LEVEL_CLASS.map((cls, i) => (
+                  <div key={i} style={{ width: CELL, height: CELL }} className={cn("rounded-[3px]", cls)} />
+                ))}
+                <span className="text-xs text-text-secondary">많음</span>
+              </div>
             </div>
           </div>
         </div>

@@ -41,7 +41,7 @@ export default async function DashboardPage() {
 
   const domains: DomainCard[] = [
     {
-      href: "/math/subjects",
+      href: "/math/history",
       label: "전공수학",
       description: "과목·단원별 문제 은행, 연습과 시험",
       icon: Sigma,
