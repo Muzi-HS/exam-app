@@ -7,8 +7,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 
 const WEEKS = 53;
-const CELL = 11;
-const GAP = 3;
+const CELL = 16;
+const GAP = 4;
 const DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 const MONTH_LABELS = [
   "1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월",
@@ -126,12 +126,12 @@ export function StudyHeatmap() {
 
       <div className="overflow-x-auto pb-1">
         <div style={{ display: "flex", gap: GAP }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: GAP, marginTop: 16 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: GAP, marginTop: 22 }}>
             {DAY_LABELS.map((label, i) => (
               <span
                 key={label}
                 style={{ height: CELL, lineHeight: `${CELL}px` }}
-                className="w-4 text-[10px] text-text-secondary"
+                className="w-5 text-xs text-text-secondary"
               >
                 {i % 2 === 1 ? label : ""}
               </span>
@@ -139,12 +139,12 @@ export function StudyHeatmap() {
           </div>
 
           <div>
-            <div style={{ display: "flex", gap: GAP, height: 14 }}>
+            <div style={{ display: "flex", gap: GAP, height: 18 }}>
               {weeks.map((col, i) => (
                 <span
                   key={col[0].key}
                   style={{ width: CELL }}
-                  className="whitespace-nowrap text-[10px] text-text-secondary"
+                  className="whitespace-nowrap text-xs text-text-secondary"
                 >
                   {monthLabels[i] ?? ""}
                 </span>
@@ -162,7 +162,7 @@ export function StudyHeatmap() {
                         key={key}
                         title={isFuture ? undefined : `${key} · ${count}회`}
                         style={{ width: CELL, height: CELL }}
-                        className={cn("rounded-[2px]", isFuture ? "bg-transparent" : LEVEL_CLASS[levelFor(count)])}
+                        className={cn("rounded-[3px]", isFuture ? "bg-transparent" : LEVEL_CLASS[levelFor(count)])}
                       />
                     );
                   })}
@@ -170,12 +170,12 @@ export function StudyHeatmap() {
               ))}
             </div>
 
-            <div style={{ display: "flex", gap: GAP, marginTop: 6 }} className="items-center">
-              <span className="text-[10px] text-text-secondary">적음</span>
+            <div style={{ display: "flex", gap: GAP, marginTop: 8 }} className="items-center">
+              <span className="text-xs text-text-secondary">적음</span>
               {LEVEL_CLASS.map((cls, i) => (
-                <div key={i} style={{ width: CELL, height: CELL }} className={cn("rounded-[2px]", cls)} />
+                <div key={i} style={{ width: CELL, height: CELL }} className={cn("rounded-[3px]", cls)} />
               ))}
-              <span className="text-[10px] text-text-secondary">많음</span>
+              <span className="text-xs text-text-secondary">많음</span>
             </div>
           </div>
         </div>

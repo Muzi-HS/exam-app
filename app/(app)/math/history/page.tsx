@@ -12,13 +12,13 @@ export default function Page() {
       </div>
 
       <div>
-        <p className="mb-2 text-sm font-medium text-text-primary">과목별 이해도 비율</p>
-        <SubjectStats />
+        <p className="mb-2 text-sm font-medium text-text-primary">학습량</p>
+        <StudyHeatmap />
       </div>
 
       <div>
-        <p className="mb-2 text-sm font-medium text-text-primary">학습량</p>
-        <StudyHeatmap />
+        <p className="mb-2 text-sm font-medium text-text-primary">과목별 이해도 비율</p>
+        <SubjectStats />
       </div>
     </div>
   );
