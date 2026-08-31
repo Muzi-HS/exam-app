@@ -318,53 +318,42 @@ alter table progress_history enable row level security;
 alter table study_sessions enable row level security;
 alter table study_session_items enable row level security;
 
+-- 공유 콘텐츠(과목/단원/문제/이미지/태그/마인드맵)에 접근 가능한 두 계정을 한 곳에서
+-- 관리합니다. 이메일이 바뀌면 이 함수만 고치면 됩니다.
+create or replace function is_shared_account()
+returns boolean as $$
+  select (auth.jwt() ->> 'email') in ('hs991219@naver.com', 'ey2020202@gmail.com');
+$$ language sql stable;
+
 create policy "profiles_self" on profiles
   for all using (auth.uid() = id) with check (auth.uid() = id);
 
 create policy "math_subjects_shared" on math_subjects
-  for all
-  using ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'))
-  with check ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'));
+  for all using (is_shared_account()) with check (is_shared_account());
 
 create policy "math_topics_shared" on math_topics
-  for all
-  using ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'))
-  with check ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'));
+  for all using (is_shared_account()) with check (is_shared_account());
 
 create policy "math_problems_shared" on math_problems
-  for all
-  using ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'))
-  with check ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'));
+  for all using (is_shared_account()) with check (is_shared_account());
 
 create policy "problem_images_shared" on problem_images
-  for all
-  using ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'))
-  with check ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'));
+  for all using (is_shared_account()) with check (is_shared_account());
 
 create policy "tags_shared" on tags
-  for all
-  using ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'))
-  with check ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'));
+  for all using (is_shared_account()) with check (is_shared_account());
 
 create policy "problem_tags_shared" on problem_tags
-  for all
-  using ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'))
-  with check ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'));
+  for all using (is_shared_account()) with check (is_shared_account());
 
 create policy "mindmap_topics_shared" on mindmap_topics
-  for all
-  using ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'))
-  with check ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'));
+  for all using (is_shared_account()) with check (is_shared_account());
 
 create policy "mindmap_nodes_shared" on mindmap_nodes
-  for all
-  using ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'))
-  with check ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'));
+  for all using (is_shared_account()) with check (is_shared_account());
 
 create policy "concept_questions_shared" on concept_questions
-  for all
-  using ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'))
-  with check ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'));
+  for all using (is_shared_account()) with check (is_shared_account());
 
 -- 이해도/즐겨찾기/오답노트는 계정별 소유 데이터라 owner-only 그대로 유지합니다.
 create policy "problem_progress_owner" on problem_progress
@@ -388,28 +377,16 @@ values ('problem-images', 'problem-images', true)
 on conflict (id) do nothing;
 
 create policy "problem_images_storage_shared_select" on storage.objects
-  for select using (
-    bucket_id = 'problem-images'
-    and (auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com')
-  );
+  for select using (bucket_id = 'problem-images' and is_shared_account());
 
 create policy "problem_images_storage_shared_insert" on storage.objects
-  for insert with check (
-    bucket_id = 'problem-images'
-    and (auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com')
-  );
+  for insert with check (bucket_id = 'problem-images' and is_shared_account());
 
 create policy "problem_images_storage_shared_update" on storage.objects
-  for update using (
-    bucket_id = 'problem-images'
-    and (auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com')
-  );
+  for update using (bucket_id = 'problem-images' and is_shared_account());
 
 create policy "problem_images_storage_shared_delete" on storage.objects
-  for delete using (
-    bucket_id = 'problem-images'
-    and (auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com')
-  );
+  for delete using (bucket_id = 'problem-images' and is_shared_account());
 
 -- =====================================================================
 -- updated_at 자동 갱신 트리거

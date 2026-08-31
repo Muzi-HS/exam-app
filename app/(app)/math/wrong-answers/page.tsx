@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ListChecks, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -11,6 +12,7 @@ import { ProblemRow, type ProblemListItem } from "@/components/math/problem-row"
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { setFavorite, setWrongAnswer } from "@/lib/problem-progress";
 import { fetchMathProblemsPage } from "@/lib/math-problems";
+import { createStudySession } from "@/lib/study-session";
 
 const PAGE_SIZE = 24;
 
@@ -26,9 +28,14 @@ const DEFAULT_FILTERS: ProblemFiltersState = {
 export default function WrongAnswersPage() {
   const supabase = createClient();
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [filters, setFilters] = useState<ProblemFiltersState>(DEFAULT_FILTERS);
   const [page, setPage] = useState(0);
   const debouncedSearch = useDebouncedValue(filters.search, 300);
+
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [startingSession, setStartingSession] = useState(false);
 
   const queryKey = [
     "wrong-answers",
@@ -93,16 +100,72 @@ export default function WrongAnswersPage() {
     queryClient.invalidateQueries({ queryKey: ["math-problems"] });
   }
 
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function exitSelectionMode() {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  }
+
+  async function handleStartSelectedPractice() {
+    if (selectedIds.size === 0) return;
+    setStartingSession(true);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const sessionId = await createStudySession(supabase, {
+        userId: user.id,
+        mode: "practice",
+        problemIds: Array.from(selectedIds),
+        filters: { subjectIds: [], topicIds: [], statuses: [] },
+        order: "random",
+        timeLimitSeconds: null,
+      });
+      router.push(`/math/practice/${sessionId}`);
+    } finally {
+      setStartingSession(false);
+    }
+  }
+
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
 
   return (
     <div className="flex flex-col gap-4 pb-16">
-      <div>
-        <h2 className="text-lg font-semibold text-text-primary">오답노트</h2>
-        <p className="mt-1 text-sm text-text-secondary">
-          시험에서 틀림으로 표시한 문제입니다. 문제 목록과 동일하게 분류해서 볼 수 있습니다.
-        </p>
-        {data && <p className="mt-1 font-mono text-xs text-text-secondary">전체 {data.total}개</p>}
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-text-primary">오답노트</h2>
+          <p className="mt-1 text-sm text-text-secondary">
+            시험에서 틀림으로 표시한 문제입니다. 문제 목록과 동일하게 분류해서 볼 수 있습니다.
+          </p>
+          {data && <p className="mt-1 font-mono text-xs text-text-secondary">전체 {data.total}개</p>}
+        </div>
+        <Button
+          type="button"
+          variant={selectionMode ? "secondary" : "ghost"}
+          onClick={() => (selectionMode ? exitSelectionMode() : setSelectionMode(true))}
+        >
+          {selectionMode ? (
+            <>
+              <X size={15} strokeWidth={1.75} />
+              선택 취소
+            </>
+          ) : (
+            <>
+              <ListChecks size={15} strokeWidth={1.75} />
+              문제 선택
+            </>
+          )}
+        </Button>
       </div>
 
       <ProblemFilters
@@ -133,6 +196,9 @@ export default function WrongAnswersPage() {
               problem={problem}
               onToggleFavorite={handleToggleFavorite}
               onRelease={handleRelease}
+              selectionMode={selectionMode}
+              selected={selectedIds.has(problem.id)}
+              onToggleSelect={toggleSelect}
             />
           ))}
         </div>
@@ -159,6 +225,21 @@ export default function WrongAnswersPage() {
           >
             <ChevronRight size={16} strokeWidth={1.75} />
           </Button>
+        </div>
+      )}
+
+      {selectionMode && (
+        <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 flex justify-center px-4 md:bottom-4">
+          <div className="flex items-center gap-3 rounded-md border border-border bg-surface px-4 py-2.5 shadow-subtle">
+            <span className="font-mono text-sm text-text-primary">{selectedIds.size}개 선택됨</span>
+            <Button
+              type="button"
+              onClick={handleStartSelectedPractice}
+              disabled={selectedIds.size === 0 || startingSession}
+            >
+              {startingSession ? "시작하는 중..." : "선택한 문제로 연습"}
+            </Button>
+          </div>
         </div>
       )}
     </div>
