@@ -1,18 +1,18 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useIsDesktop } from "@/lib/hooks/use-is-desktop";
 import { cn } from "@/lib/utils";
 
-// 모바일은 가로 스크롤 없이 화면 안에 다 들어오도록 주 수를 줄여서 보여줍니다
-// (마인드맵이 PC/모바일에서 아예 다른 구조로 보이는 것과 같은 방식).
-const DESKTOP_WEEKS = 53;
-const MOBILE_WEEKS = 14;
+// 창 크기나(모바일 폭) 사이드바 접기/펼치기로 실제 사용 가능한 폭이 바뀔 때마다
+// 그 폭에 딱 맞는 주 수를 다시 계산해서, 가로 스크롤 없이 화면을 그대로 채웁니다.
+const MAX_WEEKS = 53;
+const MIN_WEEKS = 8;
 const CELL = 16;
 const GAP = 4;
+const DAY_LABEL_WIDTH = 20 + GAP;
 const DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 const MONTH_LABELS = [
   "1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월",
@@ -46,10 +46,29 @@ function startOfDay(date: Date): Date {
   return d;
 }
 
+function weeksForWidth(width: number): number {
+  const raw = Math.floor((width - DAY_LABEL_WIDTH + GAP) / (CELL + GAP));
+  return Math.min(MAX_WEEKS, Math.max(MIN_WEEKS, raw));
+}
+
 export function StudyHeatmap() {
   const supabase = createClient();
-  const isDesktop = useIsDesktop();
-  const weekCount = isDesktop ? DESKTOP_WEEKS : MOBILE_WEEKS;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number | null>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect.width;
+      if (width) setContainerWidth(width);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // 폭을 측정하기 전(첫 렌더/서버 렌더)에는 최대치로 그려두고, 측정되는 즉시 맞춰 줄입니다.
+  const weekCount = containerWidth === null ? MAX_WEEKS : weeksForWidth(containerWidth);
 
   const today = useMemo(() => startOfDay(new Date()), []);
   // 오늘이 포함된 주가 마지막 열이 되도록, 그 주의 일요일에서 weekCount-1주 전 일요일까지 그립니다.
@@ -129,10 +148,10 @@ export function StudyHeatmap() {
       <p className="font-mono text-xs text-text-secondary">
         {isLoading
           ? "불러오는 중..."
-          : `최근 ${isDesktop ? "1년간" : `${weekCount}주간`} ${total}회 (문제 풀이 · 이해도 체크)`}
+          : `최근 ${weekCount >= MAX_WEEKS ? "1년간" : `${weekCount}주간`} ${total}회 (문제 풀이 · 이해도 체크)`}
       </p>
 
-      <div className="overflow-x-auto pb-1">
+      <div ref={containerRef} className="w-full overflow-x-auto pb-1">
         <div style={{ display: "flex", gap: GAP }}>
           <div style={{ display: "flex", flexDirection: "column", gap: GAP, marginTop: 22 }}>
             {DAY_LABELS.map((label, i) => (

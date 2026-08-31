@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { href: "/", label: "홈", icon: Home, match: (p: string) => p === "/" },
   {
-    href: "/math/subjects",
+    href: "/math/history",
     label: "전공수학",
     icon: Sigma,
     match: (p: string) => p === "/math" || p.startsWith("/math/"),
