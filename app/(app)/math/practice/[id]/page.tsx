@@ -26,7 +26,13 @@ export default function PracticeSessionPage() {
   const queryKey = ["study-session", sessionId];
   const { data, isLoading, error } = useQuery({
     queryKey,
-    queryFn: () => fetchSessionWithItems(supabase, sessionId),
+    queryFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("로그인이 필요합니다.");
+      return fetchSessionWithItems(supabase, user.id, sessionId);
+    },
   });
 
   const [index, setIndex] = useState<number | null>(null);

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { getSubjectColor } from "@/lib/subject-colors";
+import { fetchProgressMap, getProgress } from "@/lib/problem-progress";
 import { StatusIcon } from "@/components/ui/status-icon";
 import { cn } from "@/lib/utils";
 
@@ -23,20 +24,30 @@ interface SubjectStat {
   counts: StatusCounts;
 }
 
-async function fetchSubjectStats(supabase: ReturnType<typeof createClient>): Promise<SubjectStat[]> {
+async function fetchSubjectStats(
+  supabase: ReturnType<typeof createClient>,
+  userId: string
+): Promise<SubjectStat[]> {
   const [{ data: subjects, error: subjectsError }, { data: problems, error: problemsError }] =
     await Promise.all([
       supabase.from("math_subjects").select("id, name, order_index").order("order_index", { ascending: true }),
-      supabase.from("math_problems").select("current_status, math_topics!inner(subject_id)"),
+      supabase.from("math_problems").select("id, math_topics!inner(subject_id)"),
     ]);
   if (subjectsError) throw subjectsError;
   if (problemsError) throw problemsError;
 
+  const rows = (problems ?? []) as { id: string; math_topics: { subject_id: string } }[];
+  const progress = await fetchProgressMap(
+    supabase,
+    userId,
+    rows.map((p) => p.id)
+  );
+
   const countsBySubject = new Map<string, StatusCounts>();
-  for (const p of (problems ?? []) as { current_status: keyof StatusCounts | null; math_topics: { subject_id: string } }[]) {
+  for (const p of rows) {
     const subjectId = p.math_topics.subject_id;
     const current = countsBySubject.get(subjectId) ?? { none: 0, unknown: 0, partial: 0, mastered: 0 };
-    const key = p.current_status ?? "none";
+    const key = getProgress(progress, p.id).current_status ?? "none";
     current[key] += 1;
     countsBySubject.set(subjectId, current);
   }
@@ -53,7 +64,13 @@ export function SubjectStats() {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["subject-stats"],
-    queryFn: () => fetchSubjectStats(supabase),
+    queryFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return [];
+      return fetchSubjectStats(supabase, user.id);
+    },
   });
 
   if (isLoading) {

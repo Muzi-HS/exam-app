@@ -64,7 +64,13 @@ export function SessionSetupForm({ mode }: { mode: "practice" | "exam" }) {
       topicIds.join(","),
       statuses.join(","),
     ],
-    queryFn: async () => (await fetchCandidateProblems(supabase, filters)).length,
+    queryFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return 0;
+      return (await fetchCandidateProblems(supabase, user.id, filters)).length;
+    },
   });
 
   async function handleStart() {
@@ -79,7 +85,7 @@ export function SessionSetupForm({ mode }: { mode: "practice" | "exam" }) {
         return;
       }
 
-      const candidates = await fetchCandidateProblems(supabase, filters);
+      const candidates = await fetchCandidateProblems(supabase, user.id, filters);
       if (candidates.length === 0) {
         setError("조건에 맞는 문제가 없습니다.");
         return;

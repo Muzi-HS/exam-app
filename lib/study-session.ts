@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, ProblemStatus } from "@/types/database";
+import { fetchProgressMap, getProgress } from "@/lib/problem-progress";
 
 // 진행/결과 화면에서 실제로 쓰는 필드만 골라 select 하기 위한 좁은 타입입니다
 // (study_sessions 전체 Row가 아니라 이 부분만 네트워크로 가져옵니다).
@@ -24,7 +25,8 @@ export interface CandidateProblem {
   current_status: ProblemStatus | null;
 }
 
-interface CandidateRow extends CandidateProblem {
+interface CandidateRow {
+  id: string;
   math_topics: { subject_id: string };
 }
 
@@ -32,19 +34,31 @@ const STATUS_RANK: Record<ProblemStatus, number> = { unknown: 0, partial: 1, mas
 
 export async function fetchCandidateProblems(
   supabase: SupabaseClient<Database>,
+  userId: string,
   filters: SessionFilters
 ): Promise<CandidateProblem[]> {
-  let query = supabase
-    .from("math_problems")
-    .select("id, last_practiced_at, current_status, math_topics!inner(subject_id)");
+  let query = supabase.from("math_problems").select("id, math_topics!inner(subject_id)");
 
   if (filters.subjectIds.length > 0) query = query.in("math_topics.subject_id", filters.subjectIds);
   if (filters.topicIds.length > 0) query = query.in("topic_id", filters.topicIds);
-  if (filters.statuses.length > 0) query = query.in("current_status", filters.statuses);
 
   const { data, error } = await query.returns<CandidateRow[]>();
   if (error) throw error;
-  return data ?? [];
+
+  const progress = await fetchProgressMap(
+    supabase,
+    userId,
+    (data ?? []).map((p) => p.id)
+  );
+  const candidates: CandidateProblem[] = (data ?? []).map((p) => {
+    const prog = getProgress(progress, p.id);
+    return { id: p.id, last_practiced_at: prog.last_practiced_at, current_status: prog.current_status };
+  });
+
+  if (filters.statuses.length > 0) {
+    return candidates.filter((c) => !!c.current_status && filters.statuses.includes(c.current_status));
+  }
+  return candidates;
 }
 
 // 학습되지 않은(null) 문제는 "가장 오래됨"/"가장 이해도 낮음" 취급으로 우선 출제 대상이 됩니다.
@@ -130,6 +144,8 @@ export interface SessionProblemInfo {
   memo: string | null;
   youtube_url: string | null;
   solve_count: number;
+  is_wrong: boolean;
+  wrong_reason: string | null;
   math_topics: { name: string; math_subjects: { name: string } };
   problem_images: SessionProblemImage[];
 }
@@ -145,6 +161,7 @@ export interface SessionItem {
 
 export async function fetchSessionWithItems(
   supabase: SupabaseClient<Database>,
+  userId: string,
   sessionId: string
 ): Promise<{ session: StudySessionMeta; items: SessionItem[] }> {
   const { data: session, error: sessionError } = await supabase
@@ -167,14 +184,18 @@ export async function fetchSessionWithItems(
     const { data, error: problemsError } = await supabase
       .from("math_problems")
       .select(
-        "id, title, problem_number, memo, youtube_url, solve_count," +
+        "id, title, problem_number, memo, youtube_url," +
           " math_topics!inner(name, math_subjects!inner(name))," +
           " problem_images(id, storage_path, image_type, order_index)"
       )
       .in("id", problemIds)
-      .returns<SessionProblemInfo[]>();
+      .returns<Omit<SessionProblemInfo, "solve_count" | "is_wrong" | "wrong_reason">[]>();
     if (problemsError) throw problemsError;
-    problems = data ?? [];
+    const progress = await fetchProgressMap(supabase, userId, problemIds);
+    problems = (data ?? []).map((p) => {
+      const prog = getProgress(progress, p.id);
+      return { ...p, solve_count: prog.solve_count, is_wrong: prog.is_wrong, wrong_reason: prog.wrong_reason };
+    });
   }
 
   // 문제가 이후에 삭제된 경우 세션 항목에서 조용히 제외합니다(진행/결과 화면이 깨지지 않도록).
@@ -187,7 +208,7 @@ export async function fetchSessionWithItems(
 }
 
 // 문제 이해도를 변경할 때마다 호출: progress_history에 append하고
-// math_problems 캐시 컬럼(current_status, last_practiced_at, solve_count)을 함께 갱신합니다.
+// problem_progress(계정별 current_status, last_practiced_at, solve_count)를 함께 갱신합니다.
 export async function recordProgress(
   supabase: SupabaseClient<Database>,
   params: { userId: string; problemId: string; status: ProblemStatus }
@@ -201,15 +222,21 @@ export async function recordProgress(
   if (historyError) throw historyError;
 
   const now = new Date().toISOString();
-  const { error: updateError } = await supabase
-    .from("math_problems")
-    .update({ current_status: params.status, last_practiced_at: now })
-    .eq("id", params.problemId);
+  const { error: updateError } = await supabase.from("problem_progress").upsert(
+    {
+      problem_id: params.problemId,
+      user_id: params.userId,
+      current_status: params.status,
+      last_practiced_at: now,
+    },
+    { onConflict: "problem_id,user_id" }
+  );
   if (updateError) throw updateError;
 
-  const { data: solveCount, error: rpcError } = await supabase.rpc("increment_solve_count", {
-    p_problem_id: params.problemId,
-  });
+  const { data: solveCount, error: rpcError } = await supabase.rpc(
+    "increment_problem_progress_solve_count",
+    { p_problem_id: params.problemId }
+  );
   if (rpcError) throw rpcError;
 
   return { recordedAt: now, solveCount: solveCount ?? 0 };

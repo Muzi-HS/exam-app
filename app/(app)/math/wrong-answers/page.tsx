@@ -1,18 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, ChevronLeft, ChevronRight, ListChecks, X } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ProblemFilters, type ProblemFiltersState } from "@/components/math/problem-filters";
 import { ProblemRow, type ProblemListItem } from "@/components/math/problem-row";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
-import { createStudySession } from "@/lib/study-session";
-import { setFavorite } from "@/lib/problem-progress";
+import { setFavorite, setWrongAnswer } from "@/lib/problem-progress";
 import { fetchMathProblemsPage } from "@/lib/math-problems";
 
 const PAGE_SIZE = 24;
@@ -26,20 +23,15 @@ const DEFAULT_FILTERS: ProblemFiltersState = {
   search: "",
 };
 
-export default function ProblemsPage() {
+export default function WrongAnswersPage() {
   const supabase = createClient();
   const queryClient = useQueryClient();
-  const router = useRouter();
   const [filters, setFilters] = useState<ProblemFiltersState>(DEFAULT_FILTERS);
   const [page, setPage] = useState(0);
   const debouncedSearch = useDebouncedValue(filters.search, 300);
 
-  const [selectionMode, setSelectionMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [startingSession, setStartingSession] = useState(false);
-
   const queryKey = [
-    "math-problems",
+    "wrong-answers",
     filters.subjectIds.join(","),
     filters.topicIds.join(","),
     filters.statuses.join(","),
@@ -60,7 +52,7 @@ export default function ProblemsPage() {
       return fetchMathProblemsPage(
         supabase,
         user.id,
-        { ...filters, search: debouncedSearch, wrongOnly: false },
+        { ...filters, search: debouncedSearch, wrongOnly: true },
         page,
         PAGE_SIZE
       );
@@ -84,80 +76,33 @@ export default function ProblemsPage() {
     queryClient.invalidateQueries({ queryKey: ["math-problem", id] });
   }
 
-  function toggleSelect(id: string) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  function exitSelectionMode() {
-    setSelectionMode(false);
-    setSelectedIds(new Set());
-  }
-
-  async function handleStartSelectedPractice() {
-    if (selectedIds.size === 0) return;
-    setStartingSession(true);
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const sessionId = await createStudySession(supabase, {
-        userId: user.id,
-        mode: "practice",
-        problemIds: Array.from(selectedIds),
-        filters: { subjectIds: [], topicIds: [], statuses: [] },
-        order: "random",
-        timeLimitSeconds: null,
-      });
-      router.push(`/math/practice/${sessionId}`);
-    } finally {
-      setStartingSession(false);
-    }
+  async function handleRelease(id: string) {
+    queryClient.setQueryData<{ items: ProblemListItem[]; total: number } | undefined>(
+      queryKey,
+      (prev) =>
+        prev
+          ? { ...prev, items: prev.items.filter((p) => p.id !== id), total: Math.max(0, prev.total - 1) }
+          : prev
+    );
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    await setWrongAnswer(supabase, user.id, id, false, null);
+    queryClient.invalidateQueries({ queryKey: ["math-problem", id] });
+    queryClient.invalidateQueries({ queryKey: ["math-problems"] });
   }
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
 
   return (
     <div className="flex flex-col gap-4 pb-16">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold text-text-primary">문제 목록</h2>
-          {data && (
-            <p className="mt-1 font-mono text-xs text-text-secondary">전체 {data.total}개</p>
-          )}
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Button
-            type="button"
-            variant={selectionMode ? "secondary" : "ghost"}
-            onClick={() => (selectionMode ? exitSelectionMode() : setSelectionMode(true))}
-          >
-            {selectionMode ? (
-              <>
-                <X size={15} strokeWidth={1.75} />
-                선택 취소
-              </>
-            ) : (
-              <>
-                <ListChecks size={15} strokeWidth={1.75} />
-                문제 선택
-              </>
-            )}
-          </Button>
-          <Link
-            href="/math/problems/new"
-            className="inline-flex items-center justify-center gap-2 min-h-10 rounded-sm bg-accent px-3.5 py-2 text-sm font-medium text-bg transition-colors hover:opacity-90"
-          >
-            <Plus size={15} strokeWidth={1.75} />
-            문제 등록
-          </Link>
-        </div>
+      <div>
+        <h2 className="text-lg font-semibold text-text-primary">오답노트</h2>
+        <p className="mt-1 text-sm text-text-secondary">
+          시험에서 틀림으로 표시한 문제입니다. 문제 목록과 동일하게 분류해서 볼 수 있습니다.
+        </p>
+        {data && <p className="mt-1 font-mono text-xs text-text-secondary">전체 {data.total}개</p>}
       </div>
 
       <ProblemFilters
@@ -170,15 +115,15 @@ export default function ProblemsPage() {
 
       {error ? (
         <EmptyState
-          title="문제를 불러오지 못했습니다"
+          title="오답노트를 불러오지 못했습니다"
           description="네트워크 상태를 확인하고 새로고침해 주세요."
         />
       ) : isLoading ? (
         <p className="text-sm text-text-secondary">불러오는 중...</p>
       ) : data && data.items.length === 0 ? (
         <EmptyState
-          title="조건에 맞는 문제가 없습니다"
-          description="필터를 조정하거나 새 문제를 등록해 보세요."
+          title="오답노트가 비어 있습니다"
+          description="시험 결과 화면에서 문제를 틀림으로 표시하면 여기에 모입니다."
         />
       ) : (
         <div className={`flex flex-col gap-2 ${isPlaceholderData ? "opacity-60" : ""}`}>
@@ -187,9 +132,7 @@ export default function ProblemsPage() {
               key={problem.id}
               problem={problem}
               onToggleFavorite={handleToggleFavorite}
-              selectionMode={selectionMode}
-              selected={selectedIds.has(problem.id)}
-              onToggleSelect={toggleSelect}
+              onRelease={handleRelease}
             />
           ))}
         </div>
@@ -216,21 +159,6 @@ export default function ProblemsPage() {
           >
             <ChevronRight size={16} strokeWidth={1.75} />
           </Button>
-        </div>
-      )}
-
-      {selectionMode && (
-        <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 flex justify-center px-4 md:bottom-4">
-          <div className="flex items-center gap-3 rounded-md border border-border bg-surface px-4 py-2.5 shadow-subtle">
-            <span className="font-mono text-sm text-text-primary">{selectedIds.size}개 선택됨</span>
-            <Button
-              type="button"
-              onClick={handleStartSelectedPractice}
-              disabled={selectedIds.size === 0 || startingSession}
-            >
-              {startingSession ? "시작하는 중..." : "선택한 문제로 연습"}
-            </Button>
-          </div>
         </div>
       )}
     </div>

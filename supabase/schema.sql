@@ -213,6 +213,58 @@ create index if not exists idx_progress_history_item on progress_history (item_t
 create index if not exists idx_progress_history_user on progress_history (user_id, created_at desc);
 
 -- ---------------------------------------------------------------------
+-- 5-1. 전공수학 문제별 "계정 개인" 진행 상태 (이해도 / 즐겨찾기 / 풀이횟수 / 최근학습일)
+--    math_problems(과목/단원/문제/이미지/태그)는 계정 간 공유 콘텐츠지만, 이 정보만은
+--    계정마다 완전히 분리해서 관리합니다.
+-- ---------------------------------------------------------------------
+create table if not exists problem_progress (
+  problem_id uuid not null references math_problems (id) on delete cascade,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  is_favorite boolean not null default false,
+  current_status text check (current_status in ('unknown', 'partial', 'mastered')),
+  solve_count integer not null default 0,
+  last_practiced_at timestamptz,
+  -- 오답노트: 시험 결과 화면에서 "틀림"으로 표시하면 true가 되고, 이유를 함께 저장합니다.
+  is_wrong boolean not null default false,
+  wrong_reason text,
+  updated_at timestamptz not null default now(),
+  primary key (problem_id, user_id)
+);
+
+-- 이미 배포된 DB에 오답노트 기능(is_wrong/wrong_reason)을 추가하기 위한 안전한 마이그레이션.
+alter table problem_progress add column if not exists is_wrong boolean not null default false;
+alter table problem_progress add column if not exists wrong_reason text;
+
+create index if not exists idx_problem_progress_user_status on problem_progress (user_id, current_status);
+create index if not exists idx_problem_progress_user_favorite on problem_progress (user_id, is_favorite);
+create index if not exists idx_problem_progress_user_last_practiced on problem_progress (user_id, last_practiced_at);
+create index if not exists idx_problem_progress_user_wrong on problem_progress (user_id, is_wrong);
+
+-- 이해도 선택 시 solve_count를 원자적으로 증가시킵니다(행이 없으면 1로 새로 만듭니다).
+create or replace function increment_problem_progress_solve_count(p_problem_id uuid)
+returns integer as $$
+declare
+  new_count integer;
+begin
+  insert into problem_progress (problem_id, user_id, solve_count)
+  values (p_problem_id, auth.uid(), 1)
+  on conflict (problem_id, user_id)
+  do update set solve_count = problem_progress.solve_count + 1
+  returning solve_count into new_count;
+  return new_count;
+end;
+$$ language plpgsql;
+
+grant execute on function increment_problem_progress_solve_count(uuid) to authenticated;
+
+-- 기존(관리자) 계정의 math_problems 캐시 컬럼 값을 problem_progress로 1회 이관합니다.
+-- 이미 이관된 뒤 재실행해도 안전합니다(on conflict do nothing).
+insert into problem_progress (problem_id, user_id, is_favorite, current_status, solve_count, last_practiced_at, updated_at)
+select id, user_id, is_favorite, current_status, solve_count, last_practiced_at, now()
+from math_problems
+on conflict (problem_id, user_id) do nothing;
+
+-- ---------------------------------------------------------------------
 -- 6. 연습 / 시험 세션
 -- ---------------------------------------------------------------------
 create table if not exists study_sessions (
@@ -244,7 +296,11 @@ create index if not exists idx_study_session_items_session on study_session_item
 
 -- =====================================================================
 -- Row Level Security
--- 모든 테이블: 본인(user_id = auth.uid())의 데이터만 읽고 쓸 수 있습니다.
+-- 두 계정(관리자 + 두 번째 계정)이 전공수학/교육학/수학교육 콘텐츠를 동일한 권한으로
+-- 함께 쓰는 공유 작업공간입니다. 이메일 allowlist로 판별하므로(auth.jwt()의 email
+-- 클레임) 계정을 나중에 만들어도 미리 적용해 둘 수 있습니다.
+-- 단, 이해도/즐겨찾기/오답노트(problem_progress)와 이력/세션은 계정별로 완전히
+-- 분리됩니다(본인 것만 읽고 쓸 수 있음).
 -- =====================================================================
 
 alter table profiles enable row level security;
@@ -254,6 +310,7 @@ alter table math_problems enable row level security;
 alter table problem_images enable row level security;
 alter table tags enable row level security;
 alter table problem_tags enable row level security;
+alter table problem_progress enable row level security;
 alter table mindmap_topics enable row level security;
 alter table mindmap_nodes enable row level security;
 alter table concept_questions enable row level security;
@@ -264,43 +321,53 @@ alter table study_session_items enable row level security;
 create policy "profiles_self" on profiles
   for all using (auth.uid() = id) with check (auth.uid() = id);
 
-create policy "math_subjects_owner" on math_subjects
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "math_subjects_shared" on math_subjects
+  for all
+  using ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'))
+  with check ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'));
 
-create policy "math_topics_owner" on math_topics
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "math_topics_shared" on math_topics
+  for all
+  using ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'))
+  with check ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'));
 
-create policy "math_problems_owner" on math_problems
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "math_problems_shared" on math_problems
+  for all
+  using ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'))
+  with check ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'));
 
-create policy "problem_images_owner" on problem_images
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "problem_images_shared" on problem_images
+  for all
+  using ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'))
+  with check ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'));
 
-create policy "tags_owner" on tags
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "tags_shared" on tags
+  for all
+  using ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'))
+  with check ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'));
 
--- problem_tags는 user_id 컬럼이 없으므로 problem_id를 통해 소유권을 확인합니다.
-create policy "problem_tags_owner" on problem_tags
-  for all using (
-    exists (
-      select 1 from math_problems p
-      where p.id = problem_tags.problem_id and p.user_id = auth.uid()
-    )
-  )
-  with check (
-    exists (
-      select 1 from math_problems p
-      where p.id = problem_tags.problem_id and p.user_id = auth.uid()
-    )
-  );
+create policy "problem_tags_shared" on problem_tags
+  for all
+  using ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'))
+  with check ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'));
 
-create policy "mindmap_topics_owner" on mindmap_topics
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "mindmap_topics_shared" on mindmap_topics
+  for all
+  using ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'))
+  with check ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'));
 
-create policy "mindmap_nodes_owner" on mindmap_nodes
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "mindmap_nodes_shared" on mindmap_nodes
+  for all
+  using ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'))
+  with check ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'));
 
-create policy "concept_questions_owner" on concept_questions
+create policy "concept_questions_shared" on concept_questions
+  for all
+  using ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'))
+  with check ((auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com'));
+
+-- 이해도/즐겨찾기/오답노트는 계정별 소유 데이터라 owner-only 그대로 유지합니다.
+create policy "problem_progress_owner" on problem_progress
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create policy "progress_history_owner" on progress_history
@@ -313,36 +380,35 @@ create policy "study_session_items_owner" on study_session_items
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- =====================================================================
--- Storage: 문제/해설 이미지 버킷
--- 경로 규칙: {user_id}/{problem_id}/{image_type}/{filename}
+-- Storage: 문제/해설 이미지 버킷 (두 계정 모두 업로드/열람/삭제 가능)
 -- =====================================================================
 
 insert into storage.buckets (id, name, public)
 values ('problem-images', 'problem-images', true)
 on conflict (id) do nothing;
 
-create policy "problem_images_storage_owner_select" on storage.objects
+create policy "problem_images_storage_shared_select" on storage.objects
   for select using (
     bucket_id = 'problem-images'
-    and (storage.foldername(name))[1] = auth.uid()::text
+    and (auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com')
   );
 
-create policy "problem_images_storage_owner_insert" on storage.objects
+create policy "problem_images_storage_shared_insert" on storage.objects
   for insert with check (
     bucket_id = 'problem-images'
-    and (storage.foldername(name))[1] = auth.uid()::text
+    and (auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com')
   );
 
-create policy "problem_images_storage_owner_update" on storage.objects
+create policy "problem_images_storage_shared_update" on storage.objects
   for update using (
     bucket_id = 'problem-images'
-    and (storage.foldername(name))[1] = auth.uid()::text
+    and (auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com')
   );
 
-create policy "problem_images_storage_owner_delete" on storage.objects
+create policy "problem_images_storage_shared_delete" on storage.objects
   for delete using (
     bucket_id = 'problem-images'
-    and (storage.foldername(name))[1] = auth.uid()::text
+    and (auth.jwt() ->> 'email') in ('hs991219@ajou.ac.kr', 'ey2020202@gmail.com')
   );
 
 -- =====================================================================
@@ -362,7 +428,7 @@ declare
   t text;
 begin
   foreach t in array array[
-    'math_subjects', 'math_topics', 'math_problems',
+    'math_subjects', 'math_topics', 'math_problems', 'problem_progress',
     'mindmap_topics', 'mindmap_nodes', 'concept_questions'
   ]
   loop

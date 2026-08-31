@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { StatusPill } from "@/components/ui/status-pill";
 import { FavoriteButton } from "@/components/math/favorite-button";
 import { getSubjectColor } from "@/lib/subject-colors";
@@ -25,12 +25,15 @@ export function ProblemRow({
   selectionMode = false,
   selected = false,
   onToggleSelect,
+  onRelease,
 }: {
   problem: ProblemListItem;
   onToggleFavorite: (id: string, next: boolean) => Promise<void>;
   selectionMode?: boolean;
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
+  /** 지정하면(오답노트 화면) 항목 우측에 "해제" 버튼이 표시됩니다. */
+  onRelease?: (id: string) => Promise<void>;
 }) {
   const color = getSubjectColor(problem.subjectOrderIndex);
 
@@ -83,6 +86,22 @@ export function ProblemRow({
       </span>
 
       <StatusPill status={problem.current_status} />
+
+      {!selectionMode && onRelease && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onRelease(problem.id);
+          }}
+          aria-label="오답노트에서 해제"
+          title="오답노트에서 해제"
+          className="-m-2 flex h-10 w-10 shrink-0 items-center justify-center text-text-secondary transition-colors hover:text-status-unknown"
+        >
+          <X size={16} strokeWidth={1.75} />
+        </button>
+      )}
     </div>
   );
 

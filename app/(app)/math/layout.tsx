@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, FileText, PenLine, Timer, BarChart3 } from "lucide-react";
+import { BookOpen, FileText, PenLine, Timer, BarChart3, XCircle } from "lucide-react";
 import { DomainTabs } from "@/components/layout/domain-tabs";
 
 const TABS = [
@@ -8,6 +8,7 @@ const TABS = [
   { href: "/math/problems", label: "문제", icon: FileText },
   { href: "/math/practice", label: "연습", icon: PenLine },
   { href: "/math/exam", label: "시험", icon: Timer },
+  { href: "/math/wrong-answers", label: "오답노트", icon: XCircle },
   { href: "/math/history", label: "통계", icon: BarChart3 },
 ];
 

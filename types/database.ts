@@ -317,6 +317,39 @@ export interface Database {
         Update: { ended_at?: string | null };
         Relationships: [];
       };
+      problem_progress: {
+        Row: {
+          problem_id: string;
+          user_id: string;
+          is_favorite: boolean;
+          current_status: ProblemStatus | null;
+          solve_count: number;
+          last_practiced_at: string | null;
+          is_wrong: boolean;
+          wrong_reason: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          problem_id: string;
+          user_id: string;
+          is_favorite?: boolean;
+          current_status?: ProblemStatus | null;
+          solve_count?: number;
+          last_practiced_at?: string | null;
+          is_wrong?: boolean;
+          wrong_reason?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["problem_progress"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "problem_progress_problem_id_fkey";
+            columns: ["problem_id"];
+            isOneToOne: false;
+            referencedRelation: "math_problems";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       study_session_items: {
         Row: {
           id: string;
@@ -351,6 +384,10 @@ export interface Database {
     Views: Record<string, never>;
     Functions: {
       increment_solve_count: {
+        Args: { p_problem_id: string };
+        Returns: number;
+      };
+      increment_problem_progress_solve_count: {
         Args: { p_problem_id: string };
         Returns: number;
       };

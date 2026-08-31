@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight, Youtube, ArrowLeft, Pencil, Trash2 } from "l
 import { createClient } from "@/lib/supabase/client";
 import { getPublicImageUrl, removeProblemImages } from "@/lib/supabase/storage";
 import { recordProgress } from "@/lib/study-session";
+import { fetchProgressMap, getProgress, setFavorite } from "@/lib/problem-progress";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -28,6 +29,20 @@ interface ProblemDetailRow {
   current_status: ProblemStatus | null;
   last_practiced_at: string | null;
   solve_count: number;
+  is_wrong: boolean;
+  wrong_reason: string | null;
+  topic_id: string;
+  math_topics: { id: string; name: string; math_subjects: { id: string; name: string } };
+  problem_images: { id: string; storage_path: string; image_type: "problem" | "solution"; order_index: number }[];
+  problem_tags: { tags: { id: string; name: string } }[];
+}
+
+interface ProblemDetailQueryRow {
+  id: string;
+  title: string;
+  problem_number: string | null;
+  memo: string | null;
+  youtube_url: string | null;
   topic_id: string;
   math_topics: { id: string; name: string; math_subjects: { id: string; name: string } };
   problem_images: { id: string; storage_path: string; image_type: "problem" | "solution"; order_index: number }[];
@@ -48,19 +63,35 @@ export default function ProblemDetailPage() {
   const { data: problem, isLoading, error } = useQuery({
     queryKey: ["math-problem", problemId],
     queryFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("로그인이 필요합니다.");
+
       const { data, error } = await supabase
         .from("math_problems")
         .select(
-          "id, title, problem_number, memo, youtube_url, is_favorite, current_status, last_practiced_at, solve_count, topic_id," +
+          "id, title, problem_number, memo, youtube_url, topic_id," +
             " math_topics!inner(id, name, math_subjects!inner(id, name))," +
             " problem_images(id, storage_path, image_type, order_index)," +
             " problem_tags(tags(id, name))"
         )
         .eq("id", problemId)
         .single()
-        .returns<ProblemDetailRow>();
+        .returns<ProblemDetailQueryRow>();
       if (error) throw error;
-      return data;
+
+      const progress = await fetchProgressMap(supabase, user.id, [problemId]);
+      const p = getProgress(progress, problemId);
+      return {
+        ...data,
+        is_favorite: p.is_favorite,
+        current_status: p.current_status,
+        last_practiced_at: p.last_practiced_at,
+        solve_count: p.solve_count,
+        is_wrong: p.is_wrong,
+        wrong_reason: p.wrong_reason,
+      } satisfies ProblemDetailRow;
     },
   });
 
@@ -112,7 +143,11 @@ export default function ProblemDetailPage() {
     queryClient.setQueryData<ProblemDetailRow | undefined>(["math-problem", problemId], (prev) =>
       prev ? { ...prev, is_favorite: next } : prev
     );
-    await supabase.from("math_problems").update({ is_favorite: next }).eq("id", problemId);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    await setFavorite(supabase, user.id, problemId, next);
     queryClient.invalidateQueries({ queryKey: ["math-problems"] });
   }
 
@@ -275,6 +310,17 @@ export default function ProblemDetailPage() {
       </Card>
 
       <ProblemImageViewer problemImages={problemImages} solutionImages={solutionImages} />
+
+      {problem.is_wrong && (
+        <Card className="flex flex-col gap-1.5 border-status-unknown/40">
+          <p className="text-sm font-medium text-status-unknown">오답노트</p>
+          {problem.wrong_reason ? (
+            <p className="whitespace-pre-wrap text-sm text-text-primary">{problem.wrong_reason}</p>
+          ) : (
+            <p className="text-sm text-text-secondary">틀린 이유가 작성되지 않았습니다.</p>
+          )}
+        </Card>
+      )}
 
       <Card className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
