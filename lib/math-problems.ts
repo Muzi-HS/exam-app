@@ -75,7 +75,7 @@ export async function fetchMathProblemsPage(
     if (subjectDiff !== 0) return subjectDiff;
     const titleDiff = a.row.title.localeCompare(b.row.title, "ko");
     if (titleDiff !== 0) return titleDiff;
-    return (a.row.problem_number ?? "").localeCompare(b.row.problem_number ?? "", "ko");
+    return (a.row.problem_number ?? "").localeCompare(b.row.problem_number ?? "", "ko", { numeric: true });
   });
 
   const total = merged.length;
