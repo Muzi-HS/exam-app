@@ -21,11 +21,28 @@ import { Select } from "@/components/ui/select";
 import { TagInput } from "@/components/math/tag-input";
 import { ImageDropzone, type PendingImage } from "@/components/math/image-dropzone";
 
+const PROBLEM_NUMBER_PATTERN = /^\d+(-\d+)?$/;
+
+// 숫자만, 또는 "1-1"처럼 숫자-숫자 형식만 입력되도록 타이핑 중에 걸러냅니다.
+function sanitizeProblemNumber(raw: string): string {
+  let v = raw.replace(/[^0-9-]/g, "");
+  v = v.replace(/-{2,}/g, "-");
+  if (v.startsWith("-")) v = v.slice(1);
+  const firstHyphen = v.indexOf("-");
+  if (firstHyphen !== -1) {
+    v = v.slice(0, firstHyphen + 1) + v.slice(firstHyphen + 1).replace(/-/g, "");
+  }
+  return v;
+}
+
 const schema = z.object({
   subject_id: z.string().min(1, "과목을 선택하세요"),
   topic_id: z.string().min(1, "단원을 선택하세요"),
   title: z.string().min(1, "제목을 입력하세요"),
-  problem_number: z.string().optional(),
+  problem_number: z
+    .string()
+    .optional()
+    .refine((v) => !v || PROBLEM_NUMBER_PATTERN.test(v), "숫자만, 또는 1-1 형식으로 입력하세요"),
   memo: z.string().optional(),
   youtube_url: z
     .string()
@@ -163,6 +180,7 @@ export function ProblemForm({
   }, [editData]);
 
   const subjectField = register("subject_id");
+  const problemNumberField = register("problem_number");
   const selectedSubjectId = watch("subject_id");
   const topics = useMemo(
     () => subjects?.find((s) => s.id === selectedSubjectId)?.math_topics ?? [],
@@ -420,7 +438,18 @@ export function ProblemForm({
 
         <div className="flex flex-col gap-1.5">
           <label className="text-sm text-text-secondary">문제번호</label>
-          <Input {...register("problem_number")} placeholder="예: 3번" />
+          <Input
+            {...problemNumberField}
+            onChange={(e) => {
+              e.target.value = sanitizeProblemNumber(e.target.value);
+              problemNumberField.onChange(e);
+            }}
+            inputMode="numeric"
+            placeholder="예: 3 또는 1-1"
+          />
+          {errors.problem_number && (
+            <p className="text-xs text-status-unknown">{errors.problem_number.message}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5">
