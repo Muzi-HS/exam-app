@@ -1,3 +1,5 @@
+import katex from "katex";
+import "katex/dist/katex.min.css";
 import { cn } from "@/lib/utils";
 
 // 정답을 빈칸 순서대로 한 줄에 하나씩 적도록 하고, 저장할 때 배열로 바꿉니다.
@@ -55,18 +57,41 @@ export function indexBlanks(text: string): string {
   return text.replace(/___/g, () => `${BLANK_MARK}${i++}${BLANK_MARK}`);
 }
 
+// $$...$$ 는 별도 줄에 크게(수식 전용 줄), $...$ 는 문장 안에 인라인으로 렌더링합니다.
+// KaTeX가 파싱하지 못하는 식은 throwOnError: false 덕분에 에러 대신 빨간 글씨로
+// 표시되므로, 화면이 깨지는 대신 무엇이 잘못됐는지 바로 알 수 있습니다.
+const MATH_RE = /(\$\$[^$]+\$\$|\$[^$]+\$)/g;
+
+function renderMathText(text: string, keyPrefix: string | number): React.ReactNode[] {
+  return text.split(MATH_RE).map((part, i) => {
+    if (!part) return null;
+    const isBlock = part.startsWith("$$") && part.endsWith("$$") && part.length > 3;
+    const isInline = !isBlock && part.startsWith("$") && part.endsWith("$") && part.length > 1;
+    if (!isBlock && !isInline) return part;
+    const expr = isBlock ? part.slice(2, -2) : part.slice(1, -1);
+    const html = katex.renderToString(expr, { throwOnError: false, displayMode: isBlock });
+    return (
+      <span
+        key={`${keyPrefix}-math-${i}`}
+        className={isBlock ? "my-1 block overflow-x-auto" : "inline-block"}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    );
+  });
+}
+
 export function renderTextWithBlanks(
   text: string,
   blanks: string[],
   revealed: Set<number>,
   onToggle: (i: number) => void
 ): React.ReactNode[] {
-  return text.split(BLANK_TOKEN_RE).map((part, i) => {
-    if (i % 2 === 0) return part;
+  return text.split(BLANK_TOKEN_RE).flatMap((part, i) => {
+    if (i % 2 === 0) return renderMathText(part, i);
     const blankIndex = Number(part);
     return (
       <button
-        key={i}
+        key={`blank-${i}`}
         type="button"
         onClick={() => onToggle(blankIndex)}
         aria-label={revealed.has(blankIndex) ? "정답 가리기" : "정답 보기"}

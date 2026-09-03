@@ -17,6 +17,7 @@ import {
   indexBlanks,
   renderTextWithBlanks,
 } from "@/lib/blank-content";
+import { useIsDesktop } from "@/lib/hooks/use-is-desktop";
 
 interface Concept {
   id: string;
@@ -29,6 +30,7 @@ interface Concept {
 export function KeywordNotePage({ topicId }: { topicId: string }) {
   const supabase = createClient();
   const queryClient = useQueryClient();
+  const isDesktop = useIsDesktop();
 
   const { data: topic, isLoading: topicLoading, error: topicError } = useQuery({
     queryKey: ["keyword-note-topic", topicId],
@@ -126,6 +128,12 @@ export function KeywordNotePage({ topicId }: { topicId: string }) {
         주제 목록으로
       </Link>
 
+      {!isDesktop && (
+        <p className="rounded-sm border border-border bg-accent-soft px-3 py-2 text-xs text-text-secondary">
+          모바일에서는 개념을 열람만 할 수 있습니다. 추가·수정·삭제는 PC에서 해주세요.
+        </p>
+      )}
+
       {topicLoading ? (
         <p className="text-sm text-text-secondary">불러오는 중...</p>
       ) : topicError || !topic ? (
@@ -149,18 +157,21 @@ export function KeywordNotePage({ topicId }: { topicId: string }) {
                   concept={concept}
                   onUpdate={(values) => handleUpdate(concept.id, values)}
                   onRequestDelete={() => setPendingDelete(concept)}
+                  readOnly={!isDesktop}
                 />
               ))}
             </div>
           )}
 
-          {adding ? (
+          {!isDesktop ? null : adding ? (
             <Card className="flex flex-col gap-2">
               <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="개념 이름 (예: [개념9] ...)" />
               <Textarea
                 value={newQuestion}
                 onChange={(e) => setNewQuestion(e.target.value)}
-                placeholder={"빈칸 문제 (빈칸은 ___로 표시)\n빈 줄로 문단을 구분할 수 있고, 모든 줄이 |로 시작·끝나면 표로 표시됩니다."}
+                placeholder={
+                  "빈칸 문제 (빈칸은 ___로 표시)\n빈 줄로 문단을 구분할 수 있고, 모든 줄이 |로 시작·끝나면 표로 표시됩니다.\n수식은 $x^2$ 처럼 인라인으로, $$\\int_a^b f(x)dx$$ 처럼 두 개의 $로 감싸면 큰 줄로 표시됩니다."
+                }
                 rows={4}
               />
               <Textarea
@@ -217,10 +228,12 @@ function ConceptBlock({
   concept,
   onUpdate,
   onRequestDelete,
+  readOnly = false,
 }: {
   concept: Concept;
   onUpdate: (values: { name: string; question: string; blanks: string[] }) => Promise<void>;
   onRequestDelete: () => void;
+  readOnly?: boolean;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [revealed, setRevealed] = useState<Set<number>>(new Set());
@@ -319,22 +332,26 @@ function ConceptBlock({
               {allRevealed ? "모두 가리기" : "전체 공개"}
             </button>
           )}
-          <button
-            type="button"
-            onClick={startEdit}
-            aria-label="개념 수정"
-            className="flex h-10 w-10 items-center justify-center text-text-secondary hover:text-accent"
-          >
-            <Pencil size={15} strokeWidth={1.75} />
-          </button>
-          <button
-            type="button"
-            onClick={onRequestDelete}
-            aria-label="개념 삭제"
-            className="flex h-10 w-10 items-center justify-center text-text-secondary hover:text-status-unknown"
-          >
-            <Trash2 size={15} strokeWidth={1.75} />
-          </button>
+          {!readOnly && (
+            <button
+              type="button"
+              onClick={startEdit}
+              aria-label="개념 수정"
+              className="flex h-10 w-10 items-center justify-center text-text-secondary hover:text-accent"
+            >
+              <Pencil size={15} strokeWidth={1.75} />
+            </button>
+          )}
+          {!readOnly && (
+            <button
+              type="button"
+              onClick={onRequestDelete}
+              aria-label="개념 삭제"
+              className="flex h-10 w-10 items-center justify-center text-text-secondary hover:text-status-unknown"
+            >
+              <Trash2 size={15} strokeWidth={1.75} />
+            </button>
+          )}
         </div>
       </div>
 

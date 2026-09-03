@@ -39,6 +39,8 @@ interface SortableNameListProps<T extends SortableNameItem> {
   renderLeading?: (item: T) => React.ReactNode;
   /** 지정하면 이름 부분을 눌렀을 때 수정 모드 대신 이 콜백이 호출됩니다 (예: 상세 화면으로 이동). */
   onItemClick?: (item: T) => void;
+  /** true면 추가/이름 수정/순서 변경/삭제를 모두 숨기고 목록 열람(및 onItemClick)만 됩니다. */
+  readOnly?: boolean;
 }
 
 export function SortableNameList<T extends SortableNameItem>({
@@ -52,6 +54,7 @@ export function SortableNameList<T extends SortableNameItem>({
   renderExtra,
   renderLeading,
   onItemClick,
+  readOnly = false,
 }: SortableNameListProps<T>) {
   const [localItems, setLocalItems] = useState(items);
   const [newName, setNewName] = useState("");
@@ -64,6 +67,7 @@ export function SortableNameList<T extends SortableNameItem>({
   );
 
   async function handleDragEnd(e: DragEndEvent) {
+    if (readOnly) return;
     const { active, over } = e;
     if (!over || active.id === over.id) return;
 
@@ -103,25 +107,28 @@ export function SortableNameList<T extends SortableNameItem>({
                 renderExtra={renderExtra}
                 renderLeading={renderLeading}
                 onItemClick={onItemClick}
+                readOnly={readOnly}
               />
             ))}
           </div>
         </SortableContext>
       </DndContext>
 
-      <form onSubmit={handleCreate} className="flex gap-2 pt-1">
-        <Input
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          placeholder={createPlaceholder}
-          className="max-w-xs"
-          disabled={creating || submittingCreate}
-        />
-        <Button type="submit" variant="secondary" disabled={!newName.trim() || submittingCreate}>
-          <Plus size={15} strokeWidth={1.75} />
-          추가
-        </Button>
-      </form>
+      {!readOnly && (
+        <form onSubmit={handleCreate} className="flex gap-2 pt-1">
+          <Input
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder={createPlaceholder}
+            className="max-w-xs"
+            disabled={creating || submittingCreate}
+          />
+          <Button type="submit" variant="secondary" disabled={!newName.trim() || submittingCreate}>
+            <Plus size={15} strokeWidth={1.75} />
+            추가
+          </Button>
+        </form>
+      )}
     </div>
   );
 }
@@ -133,6 +140,7 @@ function SortableRow<T extends SortableNameItem>({
   renderExtra,
   renderLeading,
   onItemClick,
+  readOnly,
 }: {
   item: T;
   onRename: (id: string, name: string) => Promise<void>;
@@ -140,9 +148,11 @@ function SortableRow<T extends SortableNameItem>({
   renderExtra?: (item: T) => React.ReactNode;
   renderLeading?: (item: T) => React.ReactNode;
   onItemClick?: (item: T) => void;
+  readOnly: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
+    disabled: readOnly,
   });
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(item.name);
@@ -178,15 +188,17 @@ function SortableRow<T extends SortableNameItem>({
         isDragging && "opacity-60"
       )}
     >
-      <button
-        type="button"
-        aria-label="순서 변경"
-        className="-my-1.5 -ml-1 flex h-10 w-10 shrink-0 cursor-grab touch-none items-center justify-center rounded-sm text-text-secondary hover:bg-accent-soft hover:text-text-primary active:cursor-grabbing"
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical size={16} strokeWidth={1.75} />
-      </button>
+      {!readOnly && (
+        <button
+          type="button"
+          aria-label="순서 변경"
+          className="-my-1.5 -ml-1 flex h-10 w-10 shrink-0 cursor-grab touch-none items-center justify-center rounded-sm text-text-secondary hover:bg-accent-soft hover:text-text-primary active:cursor-grabbing"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical size={16} strokeWidth={1.75} />
+        </button>
+      )}
 
       {renderLeading?.(item)}
 
@@ -235,22 +247,26 @@ function SortableRow<T extends SortableNameItem>({
             <span className="flex-1 truncate text-sm text-text-primary">{item.name}</span>
           )}
           {renderExtra?.(item)}
-          <Button
-            type="button"
-            variant="ghost"
-            aria-label="이름 수정"
-            onClick={() => setEditing(true)}
-          >
-            <Pencil size={15} strokeWidth={1.75} />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            aria-label="삭제"
-            onClick={() => onRequestDelete(item)}
-          >
-            <Trash2 size={15} strokeWidth={1.75} />
-          </Button>
+          {!readOnly && (
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                aria-label="이름 수정"
+                onClick={() => setEditing(true)}
+              >
+                <Pencil size={15} strokeWidth={1.75} />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                aria-label="삭제"
+                onClick={() => onRequestDelete(item)}
+              >
+                <Trash2 size={15} strokeWidth={1.75} />
+              </Button>
+            </>
+          )}
         </>
       )}
     </div>

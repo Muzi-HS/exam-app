@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SortableNameList, type SortableNameItem } from "@/components/math/sortable-name-list";
+import { useIsDesktop } from "@/lib/hooks/use-is-desktop";
 
 type Topic = SortableNameItem;
 
@@ -17,6 +18,7 @@ export function KeywordNoteTopics() {
   const supabase = createClient();
   const queryClient = useQueryClient();
   const router = useRouter();
+  const isDesktop = useIsDesktop();
 
   const [pendingDelete, setPendingDelete] = useState<{ topic: Topic; conceptCount: number | null } | null>(
     null
@@ -112,6 +114,12 @@ export function KeywordNoteTopics() {
 
   return (
     <Card>
+      {!isDesktop && (
+        <p className="mb-3 rounded-sm border border-border bg-accent-soft px-3 py-2 text-xs text-text-secondary">
+          모바일에서는 주제를 열람만 할 수 있습니다. 추가·수정·순서 변경은 PC에서 해주세요.
+        </p>
+      )}
+
       {topics && topics.length === 0 ? (
         <EmptyState title="등록된 주제가 없습니다" description="아래에서 새 주제를 추가해 보세요." />
       ) : null}
@@ -124,6 +132,7 @@ export function KeywordNoteTopics() {
         onRequestDelete={handleRequestDelete}
         createPlaceholder="새 주제 이름"
         onItemClick={(topic) => router.push(`/math-education/keyword-notes/${topic.id}`)}
+        readOnly={!isDesktop}
         renderExtra={(topic) => (
           <Button
             type="button"
