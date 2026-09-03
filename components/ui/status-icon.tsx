@@ -1,4 +1,4 @@
-import { Circle, Triangle } from "lucide-react";
+import { Circle, Triangle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ProblemStatus } from "@/types/database";
 
@@ -37,6 +37,7 @@ export function DoubleCircle({
 
 export const STATUS_LABEL: Record<StatusValue, string> = {
   none: "미학습",
+  blank: "전혀 모름",
   unknown: "이해 못함",
   partial: "어느 정도",
   mastered: "완벽",
@@ -44,6 +45,7 @@ export const STATUS_LABEL: Record<StatusValue, string> = {
 
 export const STATUS_COLOR_CLASS: Record<StatusValue, string> = {
   none: "text-text-secondary",
+  blank: "text-status-blank",
   unknown: "text-status-unknown",
   partial: "text-status-partial",
   mastered: "text-status-mastered",
@@ -51,13 +53,14 @@ export const STATUS_COLOR_CLASS: Record<StatusValue, string> = {
 
 export const STATUS_RING_CLASS: Record<StatusValue, string> = {
   none: "border-text-secondary bg-accent-soft",
+  blank: "border-status-blank bg-status-blank/10",
   unknown: "border-status-unknown bg-status-unknown/10",
   partial: "border-status-partial bg-status-partial/10",
   mastered: "border-status-mastered bg-status-mastered/10",
 };
 
 /**
- * 이해도 기호: 세모(이해 못함) · 동그라미(어느 정도) · 쌍동그라미(완벽) · 빈 원(미학습).
+ * 이해도 기호: X(전혀 모름) · 세모(이해 못함) · 동그라미(어느 정도) · 쌍동그라미(완벽) · 빈 원(미학습).
  */
 export function StatusIcon({
   status,
@@ -70,6 +73,10 @@ export function StatusIcon({
   filled?: boolean;
   className?: string;
 }) {
+  if (status === "blank") {
+    // X는 채울 면이 없어서, 선택(filled)됐을 때는 선을 굵게 해서 강조합니다.
+    return <X size={size} strokeWidth={filled ? 3 : 1.75} className={cn(className)} />;
+  }
   if (status === "unknown") {
     return (
       <Triangle

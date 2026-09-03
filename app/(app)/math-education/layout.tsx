@@ -1,10 +1,11 @@
 "use client";
 
-import { Network, PenLine, Timer } from "lucide-react";
+import { Network, PenLine, Timer, BookOpen } from "lucide-react";
 import { DomainTabs } from "@/components/layout/domain-tabs";
 
 const TABS = [
   { href: "/math-education/topics", label: "주제", icon: Network },
+  { href: "/math-education/keyword-notes", label: "빵꾸노트", icon: BookOpen },
   { href: "/math-education/practice", label: "연습", icon: PenLine },
   { href: "/math-education/exam", label: "시험", icon: Timer },
 ];

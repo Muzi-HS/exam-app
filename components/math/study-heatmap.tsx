@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { EmptyState } from "@/components/ui/empty-state";
-import { cn } from "@/lib/utils";
 
 // 창 크기나(모바일 폭) 사이드바 접기/펼치기로 실제 사용 가능한 폭이 바뀔 때마다
 // 그 폭에 딱 맞는 주 수를 다시 계산해서, 가로 스크롤 없이 화면을 그대로 채웁니다.
@@ -20,13 +19,7 @@ const MONTH_LABELS = [
 
 // 이해도를 체크(=문제를 풀었다고 기록)할 때마다 progress_history에 한 줄씩 쌓이므로,
 // 하루치 개수를 GitHub 잔디처럼 색 진하기로 보여줍니다.
-const LEVEL_CLASS = [
-  "bg-bg border border-border",
-  "bg-accent/20",
-  "bg-accent/45",
-  "bg-accent/70",
-  "bg-accent",
-];
+const LEVEL_COLOR = ["#EBEDF0", "#C6E9D5", "#8FD3AC", "#4FB77A", "#238A4B"];
 
 function levelFor(count: number): 0 | 1 | 2 | 3 | 4 {
   if (count <= 0) return 0;
@@ -90,28 +83,33 @@ export function StudyHeatmap() {
     return start;
   }, [today, weekCount]);
 
-  const { data: counts, isLoading, error } = useQuery({
-    queryKey: ["study-heatmap", toLocalDateKey(gridStart), weekCount],
+  const { data, isLoading, error } = useQuery({
+    // 전체 기록을 한 번에 가져와서 화면 기간(weekCount)이 바뀌어도 다시 불러올 필요가 없습니다.
+    queryKey: ["study-heatmap-all"],
     queryFn: async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) return new Map<string, number>();
+      if (!user) return { map: new Map<string, number>(), allTimeTotal: 0, firstDate: null as Date | null };
 
+      // 히트맵 화면 기간과 상관없이 "하루 평균"은 전체 기록을 기준으로 계산해야 해서,
+      // 기간 제한 없이 전체를 가져온 뒤 화면에는 필요한 부분만 씁니다.
       const { data: rows, error } = await supabase
         .from("progress_history")
         .select("created_at")
         .eq("user_id", user.id)
-        .eq("item_type", "math_problem")
-        .gte("created_at", gridStart.toISOString());
+        .eq("item_type", "math_problem");
       if (error) throw error;
 
       const map = new Map<string, number>();
+      let firstDate: Date | null = null;
       for (const row of rows ?? []) {
-        const key = toLocalDateKey(new Date(row.created_at));
+        const date = new Date(row.created_at);
+        const key = toLocalDateKey(date);
         map.set(key, (map.get(key) ?? 0) + 1);
+        if (!firstDate || date < firstDate) firstDate = date;
       }
-      return map;
+      return { map, allTimeTotal: rows?.length ?? 0, firstDate };
     },
   });
 
@@ -142,7 +140,17 @@ export function StudyHeatmap() {
     [weeks]
   );
 
-  const total = counts ? Array.from(counts.values()).reduce((a, b) => a + b, 0) : 0;
+  // "최근 N주간 X회"는 화면에 보이는 기간만 더합니다(미래 날짜는 제외).
+  const total = weeks
+    .flat()
+    .reduce((sum, { key, date }) => sum + (date > today ? 0 : data?.map.get(key) ?? 0), 0);
+
+  // "하루 평균"은 화면 기간과 상관없이 전체 기록을 기준으로 계산합니다.
+  const allTimeTotal = data?.allTimeTotal ?? 0;
+  const daysElapsed = data?.firstDate
+    ? Math.round((today.getTime() - startOfDay(data.firstDate).getTime()) / (24 * 60 * 60 * 1000)) + 1
+    : 0;
+  const dailyAverage = daysElapsed > 0 ? allTimeTotal / daysElapsed : 0;
 
   if (error) {
     return (
@@ -158,7 +166,7 @@ export function StudyHeatmap() {
       <p className="font-mono text-xs text-text-secondary">
         {isLoading
           ? "불러오는 중..."
-          : `최근 ${weekCount >= MAX_WEEKS ? "1년간" : `${weekCount}주간`} ${total}회 (문제 풀이 · 이해도 체크)`}
+          : `최근 ${weekCount >= MAX_WEEKS ? "1년간" : `${weekCount}주간`} ${total}회 (문제 풀이 · 이해도 체크) · 하루 평균 ${dailyAverage.toFixed(1)}회`}
       </p>
 
       <div ref={containerRef} className="w-full">
@@ -194,16 +202,17 @@ export function StudyHeatmap() {
                   <div key={col[0].key} style={{ display: "flex", flexDirection: "column", gap: GAP }}>
                     {col.map(({ date, key }) => {
                       const isFuture = date > today;
-                      const count = counts?.get(key) ?? 0;
+                      const count = data?.map.get(key) ?? 0;
                       return (
                         <div
                           key={key}
                           title={isFuture ? undefined : `${key} · ${count}회`}
-                          style={{ width: CELL, height: CELL }}
-                          className={cn(
-                            "rounded-[3px]",
-                            isFuture ? "bg-transparent" : LEVEL_CLASS[levelFor(count)]
-                          )}
+                          style={{
+                            width: CELL,
+                            height: CELL,
+                            backgroundColor: isFuture ? "transparent" : LEVEL_COLOR[levelFor(count)],
+                          }}
+                          className="rounded-[3px]"
                         />
                       );
                     })}
@@ -213,8 +222,12 @@ export function StudyHeatmap() {
 
               <div style={{ display: "flex", gap: GAP, marginTop: 8 }} className="items-center">
                 <span className="text-xs text-text-secondary">적음</span>
-                {LEVEL_CLASS.map((cls, i) => (
-                  <div key={i} style={{ width: CELL, height: CELL }} className={cn("rounded-[3px]", cls)} />
+                {LEVEL_COLOR.map((color, i) => (
+                  <div
+                    key={i}
+                    style={{ width: CELL, height: CELL, backgroundColor: color }}
+                    className="rounded-[3px]"
+                  />
                 ))}
                 <span className="text-xs text-text-secondary">많음</span>
               </div>

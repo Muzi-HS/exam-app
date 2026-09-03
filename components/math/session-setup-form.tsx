@@ -21,7 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { ProblemStatus } from "@/types/database";
 
-const STATUS_VALUES: StatusValue[] = ["unknown", "partial", "mastered"];
+const STATUS_VALUES: StatusValue[] = ["blank", "unknown", "partial", "mastered"];
 
 const COUNT_OPTIONS: { value: string; label: string }[] = [
   { value: "5", label: "5문제" },

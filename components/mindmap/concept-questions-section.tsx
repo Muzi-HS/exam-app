@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Pencil, ChevronDown, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/input";
@@ -79,6 +79,15 @@ export function ConceptQuestionsSection({
     queryClient.invalidateQueries({ queryKey });
   }
 
+  async function handleUpdate(
+    id: string,
+    values: { question: string; answer: string; memo: string | null }
+  ) {
+    const { error } = await supabase.from("concept_questions").update(values).eq("id", id);
+    if (error) throw error;
+    queryClient.invalidateQueries({ queryKey });
+  }
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
@@ -103,6 +112,7 @@ export function ConceptQuestionsSection({
             key={q.id}
             question={q}
             onDelete={() => handleDelete(q.id)}
+            onUpdate={(values) => handleUpdate(q.id, values)}
             readOnly={readOnly}
           />
         ))}
@@ -158,27 +168,93 @@ export function ConceptQuestionsSection({
 function ConceptQuestionItem({
   question,
   onDelete,
+  onUpdate,
   readOnly,
 }: {
   question: ConceptQuestion;
   onDelete: () => void;
+  onUpdate: (values: { question: string; answer: string; memo: string | null }) => Promise<void>;
   readOnly: boolean;
 }) {
   const [showAnswer, setShowAnswer] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editQuestion, setEditQuestion] = useState(question.question);
+  const [editAnswer, setEditAnswer] = useState(question.answer);
+  const [editMemo, setEditMemo] = useState(question.memo ?? "");
+  const [saving, setSaving] = useState(false);
+
+  function startEdit() {
+    setEditQuestion(question.question);
+    setEditAnswer(question.answer);
+    setEditMemo(question.memo ?? "");
+    setEditing(true);
+  }
+
+  async function saveEdit() {
+    if (!editQuestion.trim() || !editAnswer.trim()) return;
+    setSaving(true);
+    try {
+      await onUpdate({
+        question: editQuestion.trim(),
+        answer: editAnswer.trim(),
+        memo: editMemo.trim() || null,
+      });
+      setEditing(false);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (editing) {
+    return (
+      <div className="flex flex-col gap-2 rounded-sm border border-border bg-bg p-3">
+        <Textarea value={editQuestion} onChange={(e) => setEditQuestion(e.target.value)} placeholder="문제" rows={3} />
+        <Textarea value={editAnswer} onChange={(e) => setEditAnswer(e.target.value)} placeholder="해설" rows={3} />
+        <Textarea
+          value={editMemo}
+          onChange={(e) => setEditMemo(e.target.value)}
+          placeholder="메모 (선택)"
+          rows={1}
+        />
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={() => setEditing(false)} disabled={saving}>
+            취소
+          </Button>
+          <Button
+            type="button"
+            onClick={saveEdit}
+            disabled={saving || !editQuestion.trim() || !editAnswer.trim()}
+          >
+            {saving ? "저장 중..." : "저장"}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-sm border border-border bg-bg p-3">
       <div className="flex items-start justify-between gap-2">
         <p className="whitespace-pre-wrap text-sm text-text-primary">{question.question}</p>
         {!readOnly && (
-          <button
-            type="button"
-            onClick={onDelete}
-            aria-label="문제 삭제"
-            className="-m-2 flex h-10 w-10 shrink-0 items-center justify-center text-text-secondary hover:text-status-unknown"
-          >
-            <Trash2 size={15} strokeWidth={1.75} />
-          </button>
+          <div className="-m-2 flex shrink-0 items-center">
+            <button
+              type="button"
+              onClick={startEdit}
+              aria-label="문제 수정"
+              className="flex h-10 w-10 items-center justify-center text-text-secondary hover:text-accent"
+            >
+              <Pencil size={15} strokeWidth={1.75} />
+            </button>
+            <button
+              type="button"
+              onClick={onDelete}
+              aria-label="문제 삭제"
+              className="flex h-10 w-10 items-center justify-center text-text-secondary hover:text-status-unknown"
+            >
+              <Trash2 size={15} strokeWidth={1.75} />
+            </button>
+          </div>
         )}
       </div>
 

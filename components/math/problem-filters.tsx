@@ -21,7 +21,7 @@ export interface ProblemFiltersState {
   search: string;
 }
 
-const STATUS_VALUES: StatusValue[] = ["none", "unknown", "partial", "mastered"];
+const STATUS_VALUES: StatusValue[] = ["none", "blank", "unknown", "partial", "mastered"];
 
 export function ProblemFilters({
   value,

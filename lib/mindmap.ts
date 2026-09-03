@@ -12,6 +12,7 @@ export interface MindmapNode {
   is_collapsed: boolean;
   position_x: number | null;
   position_y: number | null;
+  is_blank: boolean;
 }
 
 export async function fetchNodes(
@@ -21,7 +22,7 @@ export async function fetchNodes(
   const { data, error } = await supabase
     .from("mindmap_nodes")
     .select(
-      "id, parent_node_id, name, description, keywords, memo, order_index, is_collapsed, position_x, position_y"
+      "id, parent_node_id, name, description, keywords, memo, order_index, is_collapsed, position_x, position_y, is_blank"
     )
     .eq("topic_id", topicId)
     .order("order_index", { ascending: true });
@@ -73,6 +74,7 @@ export async function updateNode(
     position_x: number | null;
     position_y: number | null;
     order_index: number;
+    is_blank: boolean;
   }>
 ) {
   const { error } = await supabase.from("mindmap_nodes").update(patch).eq("id", id);

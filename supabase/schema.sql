@@ -76,7 +76,7 @@ create table if not exists math_problems (
   -- progress_history는 이력을 절대 수정하지 않는 append-only 로그이므로,
   -- 목록 화면에서 상태별로 빠르게 표시/필터링하기 위한 캐시 컬럼입니다.
   -- 이해도를 변경할 때마다 progress_history insert와 함께 이 컬럼도 갱신됩니다.
-  current_status text check (current_status in ('unknown', 'partial', 'mastered')),
+  current_status text check (current_status in ('blank', 'unknown', 'partial', 'mastered')),
   -- 이해도를 선택(=문제를 풀었다고 기록)할 때마다 1씩 증가하는 캐시 컬럼입니다.
   solve_count integer not null default 0,
   created_at timestamptz not null default now(),
@@ -86,7 +86,7 @@ create table if not exists math_problems (
 -- 이미 배포된 DB(Phase 1)에 Phase 2/4에서 추가된 컬럼을 반영하기 위한 안전한 마이그레이션.
 -- 위 create table이 이미 실행되어 테이블이 존재하는 경우에도 이 문장들만 추가로 적용됩니다.
 alter table math_problems add column if not exists current_status text
-  check (current_status in ('unknown', 'partial', 'mastered'));
+  check (current_status in ('blank', 'unknown', 'partial', 'mastered'));
 alter table math_problems add column if not exists solve_count integer not null default 0;
 
 create index if not exists idx_math_problems_topic on math_problems (topic_id);
@@ -170,6 +170,8 @@ create table if not exists mindmap_nodes (
   -- PC 캔버스형 마인드맵에서 노드를 자유 배치한 좌표. null이면 자동 배치합니다.
   position_x double precision,
   position_y double precision,
+  -- 빈칸 퀴즈 모드에서 이 노드의 이름을 가려서 빈칸으로 표시할지 여부.
+  is_blank boolean not null default false,
   last_practiced_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -178,6 +180,7 @@ create table if not exists mindmap_nodes (
 -- 이미 배포된 DB에 Phase 4에서 추가된 컬럼을 반영하기 위한 안전한 마이그레이션.
 alter table mindmap_nodes add column if not exists position_x double precision;
 alter table mindmap_nodes add column if not exists position_y double precision;
+alter table mindmap_nodes add column if not exists is_blank boolean not null default false;
 
 create index if not exists idx_mindmap_nodes_topic on mindmap_nodes (topic_id);
 create index if not exists idx_mindmap_nodes_parent on mindmap_nodes (parent_node_id);
@@ -198,6 +201,36 @@ create table if not exists concept_questions (
 create index if not exists idx_concept_questions_node on concept_questions (node_id);
 
 -- ---------------------------------------------------------------------
+-- 4-1. 수학교육: 키워드 빵꾸노트 (책을 그대로 넘겨보는 형태 — 마인드맵과 별개)
+--    주제(keyword_note_topics) 하나가 페이지 하나이고, 그 안에 개념
+--    (keyword_note_concepts)들이 순서대로 나열됩니다.
+-- ---------------------------------------------------------------------
+create table if not exists keyword_note_topics (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  name text not null,
+  order_index integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists keyword_note_concepts (
+  id uuid primary key default uuid_generate_v4(),
+  topic_id uuid not null references keyword_note_topics (id) on delete cascade,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  name text not null,
+  -- 빈칸 위치를 "___"로 표시한 원문. 예: "수학의 ___, ___을 이해하고 ..."
+  question text not null,
+  -- question에 나오는 "___" 순서대로 정답 단어/구를 담은 배열. 예: ["개념", "원리"]
+  blanks jsonb not null default '[]'::jsonb,
+  order_index integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_keyword_note_concepts_topic on keyword_note_concepts (topic_id);
+
+-- ---------------------------------------------------------------------
 -- 5. 이해도 이력 (전공수학 문제 + 교육학/수학교육 개념문제 공통)
 -- ---------------------------------------------------------------------
 create table if not exists progress_history (
@@ -205,7 +238,7 @@ create table if not exists progress_history (
   user_id uuid not null references auth.users (id) on delete cascade,
   item_type text not null check (item_type in ('math_problem', 'concept_question')),
   item_id uuid not null,
-  status text not null check (status in ('unknown', 'partial', 'mastered')),
+  status text not null check (status in ('blank', 'unknown', 'partial', 'mastered')),
   created_at timestamptz not null default now()
 );
 
@@ -221,7 +254,7 @@ create table if not exists problem_progress (
   problem_id uuid not null references math_problems (id) on delete cascade,
   user_id uuid not null references auth.users (id) on delete cascade,
   is_favorite boolean not null default false,
-  current_status text check (current_status in ('unknown', 'partial', 'mastered')),
+  current_status text check (current_status in ('blank', 'unknown', 'partial', 'mastered')),
   solve_count integer not null default 0,
   last_practiced_at timestamptz,
   -- 오답노트: 시험 결과 화면에서 "틀림"으로 표시하면 true가 되고, 이유를 함께 저장합니다.
@@ -288,7 +321,7 @@ create table if not exists study_session_items (
   item_type text not null check (item_type in ('math_problem', 'concept_question')),
   item_id uuid not null,
   order_index integer not null default 0,
-  self_rating text check (self_rating in ('unknown', 'partial', 'mastered')),
+  self_rating text check (self_rating in ('blank', 'unknown', 'partial', 'mastered')),
   answered_at timestamptz
 );
 
@@ -314,6 +347,8 @@ alter table problem_progress enable row level security;
 alter table mindmap_topics enable row level security;
 alter table mindmap_nodes enable row level security;
 alter table concept_questions enable row level security;
+alter table keyword_note_topics enable row level security;
+alter table keyword_note_concepts enable row level security;
 alter table progress_history enable row level security;
 alter table study_sessions enable row level security;
 alter table study_session_items enable row level security;
@@ -353,6 +388,12 @@ create policy "mindmap_nodes_shared" on mindmap_nodes
   for all using (is_shared_account()) with check (is_shared_account());
 
 create policy "concept_questions_shared" on concept_questions
+  for all using (is_shared_account()) with check (is_shared_account());
+
+create policy "keyword_note_topics_shared" on keyword_note_topics
+  for all using (is_shared_account()) with check (is_shared_account());
+
+create policy "keyword_note_concepts_shared" on keyword_note_concepts
   for all using (is_shared_account()) with check (is_shared_account());
 
 -- 이해도/즐겨찾기/오답노트는 계정별 소유 데이터라 owner-only 그대로 유지합니다.
@@ -406,7 +447,8 @@ declare
 begin
   foreach t in array array[
     'math_subjects', 'math_topics', 'math_problems', 'problem_progress',
-    'mindmap_topics', 'mindmap_nodes', 'concept_questions'
+    'mindmap_topics', 'mindmap_nodes', 'concept_questions',
+    'keyword_note_topics', 'keyword_note_concepts'
   ]
   loop
     execute format(

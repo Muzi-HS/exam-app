@@ -30,7 +30,7 @@ interface CandidateRow {
   math_topics: { subject_id: string };
 }
 
-const STATUS_RANK: Record<ProblemStatus, number> = { unknown: 0, partial: 1, mastered: 2 };
+const STATUS_RANK: Record<ProblemStatus, number> = { blank: 0, unknown: 1, partial: 2, mastered: 3 };
 
 export async function fetchCandidateProblems(
   supabase: SupabaseClient<Database>,

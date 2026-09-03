@@ -1,11 +1,10 @@
 import { cn } from "@/lib/utils";
 import { StatusIcon, STATUS_LABEL, STATUS_COLOR_CLASS, type StatusValue } from "@/components/ui/status-icon";
-
-export type ProblemStatus = "unknown" | "partial" | "mastered";
+import type { ProblemStatus } from "@/types/database";
 
 /**
- * 3단계 이해도를 기호(모양)+색으로 표시하는 시그니처 컴포넌트.
- * 미학습은 빈 원, 이해 못함은 세모, 어느 정도는 동그라미, 완벽은 쌍동그라미입니다.
+ * 4단계 이해도를 기호(모양)+색으로 표시하는 시그니처 컴포넌트.
+ * 미학습은 빈 원, 전혀 모름은 X, 이해 못함은 세모, 어느 정도는 동그라미, 완벽은 쌍동그라미입니다.
  */
 export function StatusPill({
   status,

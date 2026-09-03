@@ -33,6 +33,7 @@ export function NodeDetailPanel({
   const [keywords, setKeywords] = useState(node.keywords ?? "");
   const [memo, setMemo] = useState(node.memo ?? "");
   const [parentNodeId, setParentNodeId] = useState(node.parent_node_id ?? "");
+  const [isBlank, setIsBlank] = useState(node.is_blank);
   const [saving, setSaving] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -43,6 +44,7 @@ export function NodeDetailPanel({
     setKeywords(node.keywords ?? "");
     setMemo(node.memo ?? "");
     setParentNodeId(node.parent_node_id ?? "");
+    setIsBlank(node.is_blank);
   }, [node]);
 
   useEffect(() => {
@@ -70,6 +72,7 @@ export function NodeDetailPanel({
           keywords: keywords.trim() || null,
           memo: memo.trim() || null,
           parent_node_id: parentNodeId || null,
+          is_blank: isBlank,
         })
         .eq("id", node.id);
       if (error) throw error;
@@ -136,7 +139,9 @@ export function NodeDetailPanel({
             {node.description && (
               <div>
                 <p className="text-sm text-text-secondary">설명</p>
-                <p className="mt-1 whitespace-pre-wrap text-sm text-text-primary">{node.description}</p>
+                <div className="mt-1 rounded-sm bg-accent-soft p-2.5">
+                  <p className="whitespace-pre-wrap text-sm text-text-primary">{node.description}</p>
+                </div>
               </div>
             )}
             {node.keywords && (
@@ -164,6 +169,16 @@ export function NodeDetailPanel({
               <label className="text-sm text-text-secondary">이름</label>
               <Input value={name} onChange={(e) => setName(e.target.value)} />
             </div>
+
+            <label className="flex min-h-10 cursor-pointer items-center gap-2 rounded-sm border border-border px-2.5 text-sm text-text-primary">
+              <input
+                type="checkbox"
+                checked={isBlank}
+                onChange={(e) => setIsBlank(e.target.checked)}
+                className="h-4 w-4 accent-accent"
+              />
+              빈칸 퀴즈 모드에서 이 노드를 빈칸으로 표시
+            </label>
 
             <div className="flex flex-col gap-1.5">
               <label className="text-sm text-text-secondary">설명</label>

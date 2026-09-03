@@ -5,7 +5,7 @@
 // Relationships는 @supabase/supabase-js가 `select("... , related(...)")` 같은
 // 임베디드(조인) select 문자열을 타입 레벨에서 해석하는 데 필요해서 채워둔 것입니다.
 
-export type ProblemStatus = "unknown" | "partial" | "mastered";
+export type ProblemStatus = "blank" | "unknown" | "partial" | "mastered";
 export type Domain = "math" | "pedagogy" | "math_education";
 export type MindmapDomain = "pedagogy" | "math_education";
 export type ItemType = "math_problem" | "concept_question";
@@ -205,6 +205,7 @@ export interface Database {
           is_collapsed: boolean;
           position_x: number | null;
           position_y: number | null;
+          is_blank: boolean;
           last_practiced_at: string | null;
           created_at: string;
           updated_at: string;
@@ -223,6 +224,7 @@ export interface Database {
           is_collapsed?: boolean;
           position_x?: number | null;
           position_y?: number | null;
+          is_blank?: boolean;
         };
         Update: Partial<Database["public"]["Tables"]["mindmap_nodes"]["Insert"]>;
         Relationships: [
@@ -270,6 +272,56 @@ export interface Database {
             columns: ["node_id"];
             isOneToOne: false;
             referencedRelation: "mindmap_nodes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      keyword_note_topics: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          order_index: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          order_index?: number;
+        };
+        Update: { name?: string; order_index?: number };
+        Relationships: [];
+      };
+      keyword_note_concepts: {
+        Row: {
+          id: string;
+          topic_id: string;
+          user_id: string;
+          name: string;
+          question: string;
+          blanks: string[];
+          order_index: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          topic_id: string;
+          user_id: string;
+          name: string;
+          question: string;
+          blanks: string[];
+          order_index?: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["keyword_note_concepts"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "keyword_note_concepts_topic_id_fkey";
+            columns: ["topic_id"];
+            isOneToOne: false;
+            referencedRelation: "keyword_note_topics";
             referencedColumns: ["id"];
           },
         ];

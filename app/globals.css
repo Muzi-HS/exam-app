@@ -10,9 +10,10 @@
   --text-secondary: 107 107 111;
   --accent: 31 58 95;
   --accent-soft: 224 231 240;
-  --status-unknown: 181 68 68;
-  --status-partial: 217 107 26;
-  --status-mastered: 47 133 90;
+  --status-blank: 240 127 127;
+  --status-unknown: 240 173 99;
+  --status-partial: 111 168 224;
+  --status-mastered: 112 190 145;
 
   /* 과목별 색상 팔레트(파스텔): order_index를 순환 배정해 과목/단원 칩을 구분합니다.
      빨간 계열은 이해도(이해 못함) 색과 겹치지 않도록 피하고, 4번은 핑크로 뒀습니다. */
@@ -50,9 +51,10 @@
   --text-secondary: 158 158 163;
   --accent: 122 158 214;
   --accent-soft: 39 51 71;
-  --status-unknown: 224 122 122;
-  --status-partial: 235 163 99;
-  --status-mastered: 110 190 148;
+  --status-blank: 240 127 127;
+  --status-unknown: 240 173 99;
+  --status-partial: 111 168 224;
+  --status-mastered: 112 190 145;
 
   --subject-1: 165 180 252;
   --subject-1-soft: 49 46 129;

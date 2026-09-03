@@ -14,6 +14,7 @@ const config: Config = {
         accent: "rgb(var(--accent) / <alpha-value>)",
         "accent-soft": "rgb(var(--accent-soft) / <alpha-value>)",
         status: {
+          blank: "rgb(var(--status-blank) / <alpha-value>)",
           unknown: "rgb(var(--status-unknown) / <alpha-value>)",
           partial: "rgb(var(--status-partial) / <alpha-value>)",
           mastered: "rgb(var(--status-mastered) / <alpha-value>)",

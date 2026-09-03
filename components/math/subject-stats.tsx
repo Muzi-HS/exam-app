@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 
 interface StatusCounts {
   none: number;
+  blank: number;
   unknown: number;
   partial: number;
   mastered: number;
@@ -46,15 +47,15 @@ async function fetchSubjectStats(
   const countsBySubject = new Map<string, StatusCounts>();
   for (const p of rows) {
     const subjectId = p.math_topics.subject_id;
-    const current = countsBySubject.get(subjectId) ?? { none: 0, unknown: 0, partial: 0, mastered: 0 };
+    const current = countsBySubject.get(subjectId) ?? { none: 0, blank: 0, unknown: 0, partial: 0, mastered: 0 };
     const key = getProgress(progress, p.id).current_status ?? "none";
     current[key] += 1;
     countsBySubject.set(subjectId, current);
   }
 
   return (subjects ?? []).map((s) => {
-    const counts = countsBySubject.get(s.id) ?? { none: 0, unknown: 0, partial: 0, mastered: 0 };
-    const total = counts.none + counts.unknown + counts.partial + counts.mastered;
+    const counts = countsBySubject.get(s.id) ?? { none: 0, blank: 0, unknown: 0, partial: 0, mastered: 0 };
+    const total = counts.none + counts.blank + counts.unknown + counts.partial + counts.mastered;
     return { ...s, counts, total };
   });
 }
@@ -133,6 +134,12 @@ export function SubjectStats() {
                       style={{ width: `${(s.counts.unknown / s.total) * 100}%` }}
                     />
                   )}
+                  {s.counts.blank > 0 && (
+                    <div
+                      className="bg-status-blank"
+                      style={{ width: `${(s.counts.blank / s.total) * 100}%` }}
+                    />
+                  )}
                   {s.counts.none > 0 && (
                     <div className="bg-bg" style={{ width: `${(s.counts.none / s.total) * 100}%` }} />
                   )}
@@ -149,6 +156,10 @@ export function SubjectStats() {
                   <span className="inline-flex items-center gap-1">
                     <StatusIcon status="unknown" size={13} filled className="text-status-unknown" />
                     {s.counts.unknown}
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <StatusIcon status="blank" size={13} filled className="text-status-blank" />
+                    {s.counts.blank}
                   </span>
                   <span className="inline-flex items-center gap-1">
                     <StatusIcon status="none" size={13} className="text-text-secondary" />

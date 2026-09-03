@@ -79,12 +79,24 @@ export function MindmapCanvas({
   onToggleCollapse,
   onAddChild,
   onMove,
+  readOnly = false,
+  editingEnabled = true,
+  quizMode = false,
+  revealedIds,
+  onToggleReveal,
 }: {
   nodes: MindmapNode[];
   onSelect: (id: string) => void;
   onToggleCollapse: (node: MindmapNode) => void;
   onAddChild: (parentId: string | null) => void;
   onMove: (id: string, x: number, y: number) => void;
+  readOnly?: boolean;
+  /** false면 추가/이동 버튼과 위치 드래그는 자리만 차지하고 동작하지 않습니다
+   * (열람 모드·빈칸 퀴즈 모드에서 상자 크기가 흔들리지 않도록). */
+  editingEnabled?: boolean;
+  quizMode?: boolean;
+  revealedIds?: Set<string>;
+  onToggleReveal?: (id: string) => void;
 }) {
   const laidOut = useMemo(() => layoutNodes(nodes), [nodes]);
   const visibleNodes = laidOut.filter((n) => n.visible);
@@ -132,7 +144,9 @@ export function MindmapCanvas({
   }
 
   function handlePointerMove(e: React.PointerEvent) {
-    if (!dragState) return;
+    // 편집이 꺼져 있으면(열람·퀴즈 모드) 위치 이동을 막아서, 실수로 끌었다가 저장은
+    // 안 되는데 화면 위치만 어긋나 보이는 상태가 남지 않도록 합니다.
+    if (!dragState || !editingEnabled) return;
     const dx = e.clientX - dragState.startX;
     const dy = e.clientY - dragState.startY;
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
@@ -151,6 +165,8 @@ export function MindmapCanvas({
     if (dragState.moved) {
       const pos = livePositions.get(node.id);
       if (pos) onMove(node.id, Math.round(pos.x), Math.round(pos.y));
+    } else if (quizMode && node.is_blank && onToggleReveal) {
+      onToggleReveal(node.id);
     } else {
       onSelect(node.id);
     }
@@ -199,6 +215,9 @@ export function MindmapCanvas({
         {visibleNodes.map((node) => {
           const pos = positionOf(node);
           const dragging = dragState?.id === node.id && dragState.moved;
+          const isQuizBlank = quizMode && node.is_blank;
+          const isRevealed = !!revealedIds?.has(node.id);
+          const hideName = isQuizBlank && !isRevealed;
           return (
             <div
               key={node.id}
@@ -218,7 +237,9 @@ export function MindmapCanvas({
               }}
               className={cn(
                 "group absolute flex cursor-grab select-none items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-2 shadow-subtle transition-shadow hover:border-accent active:cursor-grabbing",
-                dragging && "z-10 shadow-lg"
+                dragging && "z-10 shadow-lg",
+                hideName && "border-dashed border-accent/50 bg-accent-soft/50",
+                isQuizBlank && isRevealed && "border-accent bg-accent-soft"
               )}
             >
               {node.hasChildren ? (
@@ -238,18 +259,36 @@ export function MindmapCanvas({
               ) : (
                 <span className="w-3.5 shrink-0" />
               )}
-              <span className="min-w-0 flex-1 whitespace-normal break-words text-sm leading-snug text-text-primary">
+              {/* 빈칸 상태에서도 실제 이름 텍스트를 그대로 렌더링하고 시각적으로만 숨겨서,
+                  글자 수 차이로 상자 크기가 바뀌지 않도록 합니다(위치·크기 고정). */}
+              <span
+                className={cn(
+                  "min-w-0 flex-1 whitespace-normal break-words text-sm leading-snug",
+                  hideName && "invisible",
+                  !hideName && isQuizBlank ? "text-accent font-medium" : "text-text-primary"
+                )}
+              >
                 {node.name}
               </span>
-              <button
-                type="button"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => onAddChild(node.id)}
-                aria-label="하위 개념 추가"
-                className="shrink-0 rounded-sm p-0.5 text-text-secondary opacity-0 hover:bg-accent-soft hover:text-accent group-hover:opacity-100"
-              >
-                <Plus size={14} strokeWidth={1.75} />
-              </button>
+              {/* 열람·퀴즈 모드에서도 버튼을 그대로 마운트해서 자리만 차지하게 하고 동작만
+                  막습니다 — 사라지면 상자 오른쪽 폭이 줄어들어 버리기 때문입니다(위치·크기 고정). */}
+              {!readOnly && (
+                <button
+                  type="button"
+                  disabled={!editingEnabled}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={() => onAddChild(node.id)}
+                  aria-label="하위 개념 추가"
+                  aria-hidden={!editingEnabled}
+                  tabIndex={!editingEnabled ? -1 : 0}
+                  className={cn(
+                    "shrink-0 rounded-sm p-0.5 text-text-secondary opacity-0 hover:bg-accent-soft hover:text-accent group-hover:opacity-100",
+                    !editingEnabled && "pointer-events-none opacity-0 group-hover:opacity-0"
+                  )}
+                >
+                  <Plus size={14} strokeWidth={1.75} />
+                </button>
+              )}
             </div>
           );
         })}

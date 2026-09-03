@@ -227,7 +227,7 @@ export default function PracticeSessionPage() {
 }
 
 function PracticeResult({ items }: { items: SessionItem[] }) {
-  const counts = { unknown: 0, partial: 0, mastered: 0, none: 0 };
+  const counts = { blank: 0, unknown: 0, partial: 0, mastered: 0, none: 0 };
   for (const item of items) {
     if (item.self_rating) counts[item.self_rating]++;
     else counts.none++;
@@ -240,7 +240,11 @@ function PracticeResult({ items }: { items: SessionItem[] }) {
         <p className="mt-1 text-sm text-text-secondary">총 {items.length}문제를 풀었습니다.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+        <Card>
+          <StatusIcon status="blank" size={18} filled className="text-status-blank" />
+          <p className="mt-2 font-mono text-2xl font-semibold text-status-blank">{counts.blank}</p>
+        </Card>
         <Card>
           <StatusIcon status="unknown" size={18} filled className="text-status-unknown" />
           <p className="mt-2 font-mono text-2xl font-semibold text-status-unknown">{counts.unknown}</p>
