@@ -42,10 +42,17 @@ export function parseBlocks(text: string): ContentBlock[] {
 }
 
 // "___"를 등장 순서대로 고유 인덱스가 붙은 표식으로 바꿔서, 문단/표 어디에 있든
-// blanks 배열과 정확히 같은 순서로 매칭되게 합니다.
+// blanks 배열과 정확히 같은 순서로 매칭되게 합니다. 공백이 아니라 제어 문자()로
+// 감싸는 이유: 표 셀을 나눌 때 parseBlocks가 trim()으로 셀 양 끝 공백을 지우는데,
+// 빈칸이 셀 맨 끝(또는 시작)에 오면 예전엔 표식에 쓰던 공백까지 함께 잘려나가
+// 숫자가 그대로 텍스트로 노출되는 문제가 있었습니다. 제어 문자는 trim()이
+// 공백으로 취급하지 않으므로 셀 안 어느 위치에 있어도 안전합니다.
+const BLANK_MARK = String.fromCharCode(1);
+const BLANK_TOKEN_RE = new RegExp(`${BLANK_MARK}(\\d+)${BLANK_MARK}`);
+
 export function indexBlanks(text: string): string {
   let i = 0;
-  return text.replace(/___/g, () => ` ${i++} `);
+  return text.replace(/___/g, () => `${BLANK_MARK}${i++}${BLANK_MARK}`);
 }
 
 export function renderTextWithBlanks(
@@ -54,7 +61,7 @@ export function renderTextWithBlanks(
   revealed: Set<number>,
   onToggle: (i: number) => void
 ): React.ReactNode[] {
-  return text.split(/ (\d+) /).map((part, i) => {
+  return text.split(BLANK_TOKEN_RE).map((part, i) => {
     if (i % 2 === 0) return part;
     const blankIndex = Number(part);
     return (

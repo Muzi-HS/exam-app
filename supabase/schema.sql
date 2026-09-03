@@ -353,11 +353,16 @@ alter table progress_history enable row level security;
 alter table study_sessions enable row level security;
 alter table study_session_items enable row level security;
 
--- 공유 콘텐츠(과목/단원/문제/이미지/태그/마인드맵)에 접근 가능한 두 계정을 한 곳에서
--- 관리합니다. 이메일이 바뀌면 이 함수만 고치면 됩니다.
+-- 공유 콘텐츠(과목/단원/문제/이미지/태그/마인드맵)에 접근 가능한 계정들을 한 곳에서
+-- 관리합니다. 이메일이 바뀌거나 계정이 추가/제거되면 이 함수만 고치면 됩니다.
 create or replace function is_shared_account()
 returns boolean as $$
-  select (auth.jwt() ->> 'email') in ('hs991219@naver.com', 'ey2020202@gmail.com');
+  select (auth.jwt() ->> 'email') in (
+    'hs991219@naver.com',
+    'ey2020202@gmail.com',
+    'he9273@ajou.ac.kr',
+    'kse0412@ajou.ac.kr'
+  );
 $$ language sql stable;
 
 create policy "profiles_self" on profiles
