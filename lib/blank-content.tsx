@@ -129,7 +129,7 @@ export function renderTextWithBlanks(
             : "border-dashed border-border bg-bg hover:border-accent"
         )}
       >
-        {revealed.has(blankIndex) ? blanks[blankIndex] ?? "?" : " "}
+        {revealed.has(blankIndex) ? renderMathText(blanks[blankIndex] ?? "?", `blank-${i}-ans`) : " "}
       </button>
     );
   });
