@@ -13,8 +13,9 @@ import { SortableNameList, type SortableNameItem } from "@/components/math/sorta
 import { useIsDesktop } from "@/lib/hooks/use-is-desktop";
 
 type Topic = SortableNameItem;
+export type KeywordNoteBook = "kim" | "lee";
 
-export function KeywordNoteTopics() {
+export function KeywordNoteTopics({ book }: { book: KeywordNoteBook }) {
   const supabase = createClient();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -25,7 +26,7 @@ export function KeywordNoteTopics() {
   );
   const [deleting, setDeleting] = useState(false);
 
-  const queryKey = ["keyword-note-topics"];
+  const queryKey = ["keyword-note-topics", book];
 
   const { data: topics, isLoading, error } = useQuery({
     queryKey,
@@ -33,6 +34,7 @@ export function KeywordNoteTopics() {
       const { data, error } = await supabase
         .from("keyword_note_topics")
         .select("id, name, order_index")
+        .eq("book", book)
         .order("order_index", { ascending: true });
       if (error) throw error;
       return data as Topic[];
@@ -47,7 +49,7 @@ export function KeywordNoteTopics() {
     if (!user) return;
     const { error } = await supabase
       .from("keyword_note_topics")
-      .insert({ name, user_id: user.id, order_index: maxOrder + 1 });
+      .insert({ name, book, user_id: user.id, order_index: maxOrder + 1 });
     if (error) throw error;
     queryClient.invalidateQueries({ queryKey });
   }
@@ -131,14 +133,14 @@ export function KeywordNoteTopics() {
         onReorder={handleReorder}
         onRequestDelete={handleRequestDelete}
         createPlaceholder="새 주제 이름"
-        onItemClick={(topic) => router.push(`/math-education/keyword-notes/${topic.id}`)}
+        onItemClick={(topic) => router.push(`/math-education/keyword-notes/${book}/${topic.id}`)}
         readOnly={!isDesktop}
         renderExtra={(topic) => (
           <Button
             type="button"
             variant="ghost"
             aria-label="페이지 열기"
-            onClick={() => router.push(`/math-education/keyword-notes/${topic.id}`)}
+            onClick={() => router.push(`/math-education/keyword-notes/${book}/${topic.id}`)}
           >
             <ArrowRight size={15} strokeWidth={1.75} />
           </Button>

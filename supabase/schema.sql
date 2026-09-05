@@ -204,15 +204,19 @@ create index if not exists idx_concept_questions_node on concept_questions (node
 -- 4-1. 수학교육: 키워드 빵꾸노트 (책을 그대로 넘겨보는 형태 — 마인드맵과 별개)
 --    주제(keyword_note_topics) 하나가 페이지 하나이고, 그 안에 개념
 --    (keyword_note_concepts)들이 순서대로 나열됩니다.
+--    book: 어느 빵꾸노트 책인지 ('kim' = 김민아, 'lee' = 이지윤). 탭이 책별로 나뉩니다.
 -- ---------------------------------------------------------------------
 create table if not exists keyword_note_topics (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid not null references auth.users (id) on delete cascade,
   name text not null,
+  book text not null default 'kim' check (book in ('kim', 'lee')),
   order_index integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+create index if not exists idx_keyword_note_topics_book on keyword_note_topics (book, order_index);
 
 create table if not exists keyword_note_concepts (
   id uuid primary key default uuid_generate_v4(),

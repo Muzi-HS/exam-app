@@ -14,10 +14,20 @@ export function textToBlanks(text: string): string[] {
 }
 
 // 본문 안의 빈 줄(문단 구분)로 블록을 나누고, "|"로 시작·끝나는 줄들만 있으면
-// 표로 인식합니다. 문단과 표를 섞어 쓸 수 있습니다.
-export type ContentBlock = { type: "p"; text: string } | { type: "table"; rows: string[][] };
+// 표로, "<svg"로 시작해서 "</svg>"로 끝나면 도형/그래프 블록으로, "<img"로 시작하는
+// 한 줄짜리 태그면 이미지(캡처본 등) 블록으로 인식합니다.
+// 문단·표·도형·이미지를 자유롭게 섞어 쓸 수 있습니다.
+export type ContentBlock =
+  | { type: "p"; text: string }
+  | { type: "table"; rows: string[][] }
+  | { type: "svg"; svg: string }
+  | { type: "img"; src: string; alt: string };
 
 const SEPARATOR_ROW = /^:?-{2,}:?$/;
+const SVG_BLOCK_RE = /^<svg[\s\S]*<\/svg>$/i;
+const IMG_BLOCK_RE = /^<img\s[^>]*>$/i;
+const IMG_SRC_RE = /\bsrc="([^"]*)"/i;
+const IMG_ALT_RE = /\balt="([^"]*)"/i;
 
 export function parseBlocks(text: string): ContentBlock[] {
   return text
@@ -25,6 +35,14 @@ export function parseBlocks(text: string): ContentBlock[] {
     .map((c) => c.trim())
     .filter(Boolean)
     .map((chunk) => {
+      if (SVG_BLOCK_RE.test(chunk)) return { type: "svg" as const, svg: chunk };
+      if (IMG_BLOCK_RE.test(chunk)) {
+        return {
+          type: "img" as const,
+          src: chunk.match(IMG_SRC_RE)?.[1] ?? "",
+          alt: chunk.match(IMG_ALT_RE)?.[1] ?? "",
+        };
+      }
       const lines = chunk
         .split("\n")
         .map((l) => l.trim())
@@ -62,12 +80,21 @@ export function indexBlanks(text: string): string {
 // 표시되므로, 화면이 깨지는 대신 무엇이 잘못됐는지 바로 알 수 있습니다.
 const MATH_RE = /(\$\$[^$]+\$\$|\$[^$]+\$)/g;
 
+// 표 칸 안에서는 실제 줄바꿈을 쓸 수 없으므로(칸을 나누는 구분과 겹침),
+// "<br>"를 줄바꿈 자리표시자로 대신 씁니다. ①②③처럼 번호별 항목을 한 칸에
+// 넣으면서도 줄을 나눠 보여주고 싶을 때 사용합니다.
+function renderLineBreaks(text: string, keyPrefix: string | number): React.ReactNode[] {
+  const parts = text.split("<br>");
+  if (parts.length === 1) return [text];
+  return parts.flatMap((p, i) => (i === 0 ? [p] : [<br key={`${keyPrefix}-br-${i}`} />, p]));
+}
+
 function renderMathText(text: string, keyPrefix: string | number): React.ReactNode[] {
-  return text.split(MATH_RE).map((part, i) => {
-    if (!part) return null;
+  return text.split(MATH_RE).flatMap((part, i) => {
+    if (!part) return [];
     const isBlock = part.startsWith("$$") && part.endsWith("$$") && part.length > 3;
     const isInline = !isBlock && part.startsWith("$") && part.endsWith("$") && part.length > 1;
-    if (!isBlock && !isInline) return part;
+    if (!isBlock && !isInline) return renderLineBreaks(part, `${keyPrefix}-${i}`);
     const expr = isBlock ? part.slice(2, -2) : part.slice(1, -1);
     const html = katex.renderToString(expr, { throwOnError: false, displayMode: isBlock });
     return (

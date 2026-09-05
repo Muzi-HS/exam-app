@@ -281,6 +281,7 @@ export interface Database {
           id: string;
           user_id: string;
           name: string;
+          book: "kim" | "lee";
           order_index: number;
           created_at: string;
           updated_at: string;
@@ -289,9 +290,10 @@ export interface Database {
           id?: string;
           user_id: string;
           name: string;
+          book?: "kim" | "lee";
           order_index?: number;
         };
-        Update: { name?: string; order_index?: number };
+        Update: { name?: string; book?: "kim" | "lee"; order_index?: number };
         Relationships: [];
       };
       keyword_note_concepts: {

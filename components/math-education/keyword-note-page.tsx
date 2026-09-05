@@ -18,6 +18,7 @@ import {
   renderTextWithBlanks,
 } from "@/lib/blank-content";
 import { useIsDesktop } from "@/lib/hooks/use-is-desktop";
+import type { KeywordNoteBook } from "@/components/math-education/keyword-note-topics";
 
 interface Concept {
   id: string;
@@ -27,7 +28,7 @@ interface Concept {
   order_index: number;
 }
 
-export function KeywordNotePage({ topicId }: { topicId: string }) {
+export function KeywordNotePage({ topicId, book }: { topicId: string; book: KeywordNoteBook }) {
   const supabase = createClient();
   const queryClient = useQueryClient();
   const isDesktop = useIsDesktop();
@@ -121,7 +122,7 @@ export function KeywordNotePage({ topicId }: { topicId: string }) {
   return (
     <div className="flex flex-col gap-4 pb-16">
       <Link
-        href="/math-education/keyword-notes"
+        href={`/math-education/keyword-notes/${book}`}
         className="inline-flex w-fit items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary"
       >
         <ArrowLeft size={15} strokeWidth={1.75} />
@@ -170,7 +171,7 @@ export function KeywordNotePage({ topicId }: { topicId: string }) {
                 value={newQuestion}
                 onChange={(e) => setNewQuestion(e.target.value)}
                 placeholder={
-                  "빈칸 문제 (빈칸은 ___로 표시)\n빈 줄로 문단을 구분할 수 있고, 모든 줄이 |로 시작·끝나면 표로 표시됩니다.\n수식은 $x^2$ 처럼 인라인으로, $$\\int_a^b f(x)dx$$ 처럼 두 개의 $로 감싸면 큰 줄로 표시됩니다."
+                  "빈칸 문제 (빈칸은 ___로 표시)\n빈 줄로 문단을 구분할 수 있고, 모든 줄이 |로 시작·끝나면 표로 표시됩니다.\n수식은 $x^2$ 처럼 인라인으로, $$\\int_a^b f(x)dx$$ 처럼 두 개의 $로 감싸면 큰 줄로 표시됩니다.\n<svg>...</svg>로 시작·끝나는 문단은 그래프/도형으로 표시됩니다.\n<img src=\"...\" alt=\"...\">로만 이루어진 문단은 캡처 이미지로 표시됩니다."
                 }
                 rows={4}
               />
@@ -358,7 +359,18 @@ function ConceptBlock({
       {!collapsed && (
         <div className="flex flex-col gap-3">
           {blocks.map((block, bi) =>
-            block.type === "table" ? (
+            block.type === "svg" ? (
+              <div
+                key={bi}
+                className="flex justify-center overflow-x-auto rounded-sm bg-surface p-2"
+                dangerouslySetInnerHTML={{ __html: block.svg }}
+              />
+            ) : block.type === "img" ? (
+              <div key={bi} className="overflow-x-auto rounded-sm bg-surface p-2 text-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={block.src} alt={block.alt} className="mx-auto block max-w-full" />
+              </div>
+            ) : block.type === "table" ? (
               <div key={bi} className="overflow-x-auto">
                 <table className="w-full border-collapse text-sm">
                   <tbody>
@@ -368,14 +380,14 @@ function ConceptBlock({
                           ri === 0 ? (
                             <th
                               key={ci}
-                              className="border border-border bg-surface px-2 py-1.5 text-center align-middle font-medium text-text-primary"
+                              className="border border-border bg-surface px-2 py-1.5 text-left align-middle font-medium text-text-primary"
                             >
                               {renderTextWithBlanks(cell, concept.blanks, revealed, toggleBlank)}
                             </th>
                           ) : (
                             <td
                               key={ci}
-                              className="border border-border px-2 py-1.5 text-center align-middle text-text-primary"
+                              className="border border-border px-2 py-1.5 text-left align-middle text-text-primary"
                             >
                               {renderTextWithBlanks(cell, concept.blanks, revealed, toggleBlank)}
                             </td>
