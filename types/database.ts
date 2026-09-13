@@ -79,6 +79,8 @@ export interface Database {
           source: string | null;
           year: number | null;
           problem_number: string | null;
+          content: string | null;
+          solution_content: string | null;
           memo: string | null;
           youtube_url: string | null;
           is_favorite: boolean;
@@ -96,6 +98,8 @@ export interface Database {
           source?: string | null;
           year?: number | null;
           problem_number?: string | null;
+          content?: string | null;
+          solution_content?: string | null;
           memo?: string | null;
           youtube_url?: string | null;
           is_favorite?: boolean;

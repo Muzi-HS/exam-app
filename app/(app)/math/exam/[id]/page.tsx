@@ -212,7 +212,12 @@ function ExamProgress({
         <h1 className="text-lg font-semibold text-text-primary">{item.problem.title}</h1>
       </Card>
 
-      <ProblemImageViewer problemImages={problemImages} solutionImages={[]} allowSolution={false} />
+      <ProblemImageViewer
+        problemImages={problemImages}
+        solutionImages={[]}
+        problemContent={item.problem.content}
+        allowSolution={false}
+      />
 
       <div className="flex items-center justify-between gap-2">
         <Button

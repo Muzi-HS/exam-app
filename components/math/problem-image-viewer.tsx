@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Lightbox } from "@/components/math/lightbox";
+import { renderMath, hasText } from "@/lib/math-render";
 
 export interface ViewerImage {
   id: string;
@@ -18,21 +19,31 @@ export interface ViewerImage {
 export function ProblemImageViewer({
   problemImages,
   solutionImages,
+  problemContent,
+  solutionContent,
   allowSolution = true,
 }: {
   problemImages: ViewerImage[];
   solutionImages: ViewerImage[];
+  problemContent?: string | null;
+  solutionContent?: string | null;
   allowSolution?: boolean;
 }) {
   const [showSolution, setShowSolution] = useState(false);
   const [lightbox, setLightbox] = useState<{ type: "problem" | "solution"; index: number } | null>(
     null
   );
+  const hasSolution = solutionImages.length > 0 || hasText(solutionContent);
 
   return (
     <>
       <Card>
         <p className="mb-2 text-sm font-medium text-text-primary">문제</p>
+        {hasText(problemContent) && (
+          <p className="mb-3 whitespace-pre-wrap text-sm text-text-primary">
+            {renderMath(problemContent)}
+          </p>
+        )}
         <ImageGrid images={problemImages} onOpen={(index) => setLightbox({ type: "problem", index })} />
       </Card>
 
@@ -40,20 +51,27 @@ export function ProblemImageViewer({
         <Card>
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-text-primary">해설</p>
-            {solutionImages.length > 0 && (
+            {hasSolution && (
               <Button type="button" variant="secondary" onClick={() => setShowSolution((v) => !v)}>
                 {showSolution ? "해설 숨기기" : "해설 보기"}
               </Button>
             )}
           </div>
-          {solutionImages.length === 0 ? (
-            <p className="mt-2 text-sm text-text-secondary">등록된 해설 이미지가 없습니다.</p>
+          {!hasSolution ? (
+            <p className="mt-2 text-sm text-text-secondary">등록된 해설이 없습니다.</p>
           ) : showSolution ? (
-            <div className="mt-3">
-              <ImageGrid
-                images={solutionImages}
-                onOpen={(index) => setLightbox({ type: "solution", index })}
-              />
+            <div className="mt-3 flex flex-col gap-3">
+              {hasText(solutionContent) && (
+                <p className="whitespace-pre-wrap text-sm text-text-primary">
+                  {renderMath(solutionContent)}
+                </p>
+              )}
+              {solutionImages.length > 0 && (
+                <ImageGrid
+                  images={solutionImages}
+                  onOpen={(index) => setLightbox({ type: "solution", index })}
+                />
+              )}
             </div>
           ) : null}
         </Card>

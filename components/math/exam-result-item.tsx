@@ -125,7 +125,12 @@ export function ExamResultItem({
 
       {expanded && (
         <div className="flex flex-col gap-3">
-          <ProblemImageViewer problemImages={problemImages} solutionImages={solutionImages} />
+          <ProblemImageViewer
+            problemImages={problemImages}
+            solutionImages={solutionImages}
+            problemContent={item.problem.content}
+            solutionContent={item.problem.solution_content}
+          />
 
           <div>
             <p className="mb-1.5 text-sm font-medium text-text-primary">채점</p>

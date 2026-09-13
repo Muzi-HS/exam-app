@@ -8,6 +8,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { getPublicImageUrl } from "@/lib/supabase/storage";
 import { fetchSessionWithItems, recordProgress, type SessionItem } from "@/lib/study-session";
+import { renderMath } from "@/lib/math-render";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -171,7 +172,7 @@ export default function PracticeSessionPage() {
         <h1 className="text-lg font-semibold text-text-primary">{item.problem.title}</h1>
         {item.problem.memo && (
           <p className="whitespace-pre-wrap rounded-sm bg-bg p-3 text-sm text-text-secondary">
-            {item.problem.memo}
+            {renderMath(item.problem.memo)}
           </p>
         )}
         {item.problem.youtube_url && (
@@ -187,7 +188,12 @@ export default function PracticeSessionPage() {
         )}
       </Card>
 
-      <ProblemImageViewer problemImages={problemImages} solutionImages={solutionImages} />
+      <ProblemImageViewer
+        problemImages={problemImages}
+        solutionImages={solutionImages}
+        problemContent={item.problem.content}
+        solutionContent={item.problem.solution_content}
+      />
 
       <Card className="flex flex-col gap-2">
         <div className="flex items-center justify-between">

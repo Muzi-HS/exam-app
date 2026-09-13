@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Youtube, ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { getPublicImageUrl, removeProblemImages } from "@/lib/supabase/storage";
+import { renderMath } from "@/lib/math-render";
 import { recordProgress } from "@/lib/study-session";
 import { fetchProgressMap, getProgress, setFavorite } from "@/lib/problem-progress";
 import { Card } from "@/components/ui/card";
@@ -23,6 +24,8 @@ interface ProblemDetailRow {
   id: string;
   title: string;
   problem_number: string | null;
+  content: string | null;
+  solution_content: string | null;
   memo: string | null;
   youtube_url: string | null;
   is_favorite: boolean;
@@ -41,6 +44,8 @@ interface ProblemDetailQueryRow {
   id: string;
   title: string;
   problem_number: string | null;
+  content: string | null;
+  solution_content: string | null;
   memo: string | null;
   youtube_url: string | null;
   topic_id: string;
@@ -71,7 +76,7 @@ export default function ProblemDetailPage() {
       const { data, error } = await supabase
         .from("math_problems")
         .select(
-          "id, title, problem_number, memo, youtube_url, topic_id," +
+          "id, title, problem_number, content, solution_content, memo, youtube_url, topic_id," +
             " math_topics!inner(id, name, math_subjects!inner(id, name))," +
             " problem_images(id, storage_path, image_type, order_index)," +
             " problem_tags(tags(id, name))"
@@ -284,7 +289,7 @@ export default function ProblemDetailPage() {
                 key={tag.id}
                 className="rounded-sm bg-accent-soft px-2 py-0.5 text-xs text-accent"
               >
-                {tag.name}
+                {renderMath(tag.name, tag.id)}
               </span>
             ))}
           </div>
@@ -292,7 +297,7 @@ export default function ProblemDetailPage() {
 
         {problem.memo && (
           <p className="whitespace-pre-wrap rounded-sm bg-bg p-3 text-sm text-text-secondary">
-            {problem.memo}
+            {renderMath(problem.memo)}
           </p>
         )}
 
@@ -309,7 +314,12 @@ export default function ProblemDetailPage() {
         )}
       </Card>
 
-      <ProblemImageViewer problemImages={problemImages} solutionImages={solutionImages} />
+      <ProblemImageViewer
+        problemImages={problemImages}
+        solutionImages={solutionImages}
+        problemContent={problem.content}
+        solutionContent={problem.solution_content}
+      />
 
       {problem.is_wrong && (
         <Card className="flex flex-col gap-1.5 border-status-unknown/40">

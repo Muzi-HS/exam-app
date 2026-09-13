@@ -19,6 +19,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Pencil, Trash2, Check, X as XIcon, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { renderMath } from "@/lib/math-render";
 import { cn } from "@/lib/utils";
 
 export interface SortableNameItem {
@@ -241,10 +242,12 @@ function SortableRow<T extends SortableNameItem>({
               onClick={() => onItemClick(item)}
               className="min-h-10 flex-1 truncate text-left text-sm text-text-primary hover:text-accent"
             >
-              {item.name}
+              {renderMath(item.name, item.id)}
             </button>
           ) : (
-            <span className="flex-1 truncate text-sm text-text-primary">{item.name}</span>
+            <span className="flex-1 truncate text-sm text-text-primary">
+              {renderMath(item.name, item.id)}
+            </span>
           )}
           {renderExtra?.(item)}
           {!readOnly && (

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { renderMath } from "@/lib/math-render";
 import { cn } from "@/lib/utils";
 
 export function TagInput({
@@ -51,7 +52,7 @@ export function TagInput({
           key={tag}
           className="inline-flex items-center gap-1 rounded-sm bg-accent-soft px-2 py-0.5 text-xs text-accent"
         >
-          {tag}
+          {renderMath(tag, tag)}
           <button
             type="button"
             onClick={() => removeTag(tag)}

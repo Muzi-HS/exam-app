@@ -20,6 +20,7 @@ import { Input, Textarea } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { TagInput } from "@/components/math/tag-input";
 import { ImageDropzone, type PendingImage } from "@/components/math/image-dropzone";
+import { MathPreview } from "@/components/ui/math-preview";
 
 const PROBLEM_NUMBER_PATTERN = /^\d+(-\d+)?$/;
 
@@ -43,6 +44,8 @@ const schema = z.object({
     .string()
     .optional()
     .refine((v) => !v || PROBLEM_NUMBER_PATTERN.test(v), "숫자만, 또는 1-1 형식으로 입력하세요"),
+  content: z.string().optional(),
+  solution_content: z.string().optional(),
   memo: z.string().optional(),
   youtube_url: z
     .string()
@@ -73,6 +76,8 @@ interface EditFetchRow {
   topic_id: string;
   title: string;
   problem_number: string | null;
+  content: string | null;
+  solution_content: string | null;
   memo: string | null;
   youtube_url: string | null;
   math_topics: { subject_id: string };
@@ -113,7 +118,7 @@ export function ProblemForm({
       const { data, error } = await supabase
         .from("math_problems")
         .select(
-          "id, topic_id, title, problem_number, memo, youtube_url," +
+          "id, topic_id, title, problem_number, content, solution_content, memo, youtube_url," +
             " math_topics!inner(subject_id)," +
             " problem_images(id, storage_path, image_type, order_index)," +
             " problem_tags(tags(id, name))"
@@ -141,6 +146,8 @@ export function ProblemForm({
       topic_id: "",
       title: "",
       problem_number: "",
+      content: "",
+      solution_content: "",
       memo: "",
       youtube_url: "",
     },
@@ -164,6 +171,8 @@ export function ProblemForm({
       topic_id: editData.topic_id,
       title: editData.title,
       problem_number: editData.problem_number ?? "",
+      content: editData.content ?? "",
+      solution_content: editData.solution_content ?? "",
       memo: editData.memo ?? "",
       youtube_url: editData.youtube_url ?? "",
     });
@@ -182,6 +191,9 @@ export function ProblemForm({
   const subjectField = register("subject_id");
   const problemNumberField = register("problem_number");
   const selectedSubjectId = watch("subject_id");
+  const contentValue = watch("content");
+  const solutionContentValue = watch("solution_content");
+  const memoValue = watch("memo");
   const topics = useMemo(
     () => subjects?.find((s) => s.id === selectedSubjectId)?.math_topics ?? [],
     [subjects, selectedSubjectId]
@@ -199,8 +211,9 @@ export function ProblemForm({
   async function onSubmit(values: FormValues) {
     setSubmitError(null);
     const totalProblemImages = existingProblemImages.length + problemImages.length;
-    if (totalProblemImages === 0) {
-      setImageError("문제 이미지를 최소 1장 등록하세요");
+    const hasProblemContent = !!values.content?.trim();
+    if (totalProblemImages === 0 && !hasProblemContent) {
+      setImageError("문제 내용을 직접 입력하거나 이미지를 최소 1장 등록하세요");
       return;
     }
     setImageError(null);
@@ -228,6 +241,8 @@ export function ProblemForm({
         user_id: userId,
         title: values.title,
         problem_number: values.problem_number || null,
+        content: values.content || null,
+        solution_content: values.solution_content || null,
         memo: values.memo || null,
         youtube_url: values.youtube_url || null,
       })
@@ -286,6 +301,8 @@ export function ProblemForm({
           topic_id: values.topic_id,
           title: values.title,
           problem_number: values.problem_number || null,
+          content: values.content || null,
+          solution_content: values.solution_content || null,
           memo: values.memo || null,
           youtube_url: values.youtube_url || null,
         })
@@ -462,29 +479,53 @@ export function ProblemForm({
 
         <div className="flex flex-col gap-1.5">
           <label className="text-sm text-text-secondary">메모</label>
-          <Textarea {...register("memo")} rows={3} placeholder="풀이 아이디어, 주의할 점 등" />
+          <Textarea {...register("memo")} rows={3} placeholder="풀이 아이디어, 주의할 점 등 ($x^2$ 처럼 수식 입력 가능)" />
+          <MathPreview text={memoValue} />
         </div>
 
         <div className="flex flex-col gap-1.5">
           <label className="text-sm text-text-secondary">태그</label>
           <TagInput value={tags} onChange={setTags} />
+          <p className="text-xs text-text-secondary">태그에도 $...$ 로 수식을 넣을 수 있습니다.</p>
         </div>
       </Card>
 
       <Card className="flex flex-col gap-5">
+        <p className="text-xs text-text-secondary">
+          문제/해설은 이미지 업로드 또는 아래 직접 입력(텍스트) 중 원하는 방식으로, 또는 둘 다
+          함께 등록할 수 있습니다. 문제는 이미지나 직접 입력 중 최소 하나가 필요합니다.
+        </p>
+        <div>
+          <p className="mb-1.5 text-sm text-text-secondary">문제 내용 (직접 입력)</p>
+          <Textarea
+            {...register("content")}
+            rows={4}
+            placeholder="문제를 직접 입력하세요. 예) 함수 $f(x)=x^2+1$ 의 최솟값을 구하시오."
+          />
+          <MathPreview text={contentValue} className="mt-1.5" />
+        </div>
         <div>
           <ExistingImageGrid
-            label="문제 이미지 *"
+            label="문제 이미지"
             images={existingProblemImages}
             onRemove={(img) => removeExistingImage("problem", img)}
           />
           <ImageDropzone
-            label={existingProblemImages.length > 0 ? "문제 이미지 추가" : "문제 이미지 *"}
+            label={existingProblemImages.length > 0 ? "문제 이미지 추가" : "문제 이미지"}
             images={problemImages}
             onChange={setProblemImages}
             className="mt-2"
           />
           {imageError && <p className="mt-1 text-xs text-status-unknown">{imageError}</p>}
+        </div>
+        <div>
+          <p className="mb-1.5 text-sm text-text-secondary">해설 내용 (직접 입력)</p>
+          <Textarea
+            {...register("solution_content")}
+            rows={4}
+            placeholder="해설을 직접 입력하세요. (선택)"
+          />
+          <MathPreview text={solutionContentValue} className="mt-1.5" />
         </div>
         <div>
           <ExistingImageGrid

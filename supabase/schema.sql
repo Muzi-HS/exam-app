@@ -68,6 +68,10 @@ create table if not exists math_problems (
   source text,
   year integer,
   problem_number text,
+  -- 문제/해설을 이미지 대신(또는 이미지와 함께) 텍스트로 직접 입력할 때 사용합니다.
+  -- $...$ / $$...$$ 로 LaTeX 수식을 쓸 수 있습니다.
+  content text,
+  solution_content text,
   memo text,
   youtube_url text,
   is_favorite boolean not null default false,
@@ -88,6 +92,8 @@ create table if not exists math_problems (
 alter table math_problems add column if not exists current_status text
   check (current_status in ('blank', 'unknown', 'partial', 'mastered'));
 alter table math_problems add column if not exists solve_count integer not null default 0;
+alter table math_problems add column if not exists content text;
+alter table math_problems add column if not exists solution_content text;
 
 create index if not exists idx_math_problems_topic on math_problems (topic_id);
 create index if not exists idx_math_problems_user on math_problems (user_id);

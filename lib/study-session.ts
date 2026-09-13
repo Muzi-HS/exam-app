@@ -141,6 +141,8 @@ export interface SessionProblemInfo {
   id: string;
   title: string;
   problem_number: string | null;
+  content: string | null;
+  solution_content: string | null;
   memo: string | null;
   youtube_url: string | null;
   solve_count: number;
@@ -184,7 +186,7 @@ export async function fetchSessionWithItems(
     const { data, error: problemsError } = await supabase
       .from("math_problems")
       .select(
-        "id, title, problem_number, memo, youtube_url," +
+        "id, title, problem_number, content, solution_content, memo, youtube_url," +
           " math_topics!inner(name, math_subjects!inner(name))," +
           " problem_images(id, storage_path, image_type, order_index)"
       )

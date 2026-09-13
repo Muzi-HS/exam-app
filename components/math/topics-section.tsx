@@ -147,6 +147,9 @@ export function TopicsSection({ subjectId }: { subjectId: string }) {
         onRequestDelete={handleRequestDelete}
         createPlaceholder="새 단원 이름"
       />
+      <p className="mt-1 px-1 text-xs text-text-secondary">
+        단원 이름에도 $x^2$ 처럼 수식을 입력할 수 있습니다.
+      </p>
 
       <ConfirmDialog
         open={pendingDelete !== null}
