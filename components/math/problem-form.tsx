@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,7 +21,6 @@ import { MathSelect } from "@/components/ui/math-select";
 import { TagInput } from "@/components/math/tag-input";
 import { ImageDropzone, type PendingImage } from "@/components/math/image-dropzone";
 import { MathPreview } from "@/components/ui/math-preview";
-import { MathToolbar } from "@/components/ui/math-toolbar";
 
 const PROBLEM_NUMBER_PATTERN = /^\d+(-\d+)?$/;
 
@@ -190,12 +189,6 @@ export function ProblemForm({
   }, [editData]);
 
   const problemNumberField = register("problem_number");
-  const contentRef = useRef<HTMLTextAreaElement | null>(null);
-  const solutionContentRef = useRef<HTMLTextAreaElement | null>(null);
-  const memoRef = useRef<HTMLTextAreaElement | null>(null);
-  const contentField = register("content");
-  const solutionContentField = register("solution_content");
-  const memoField = register("memo");
   const selectedSubjectId = watch("subject_id");
   const selectedTopicId = watch("topic_id");
   const contentValue = watch("content");
@@ -479,18 +472,9 @@ export function ProblemForm({
         <div className="flex flex-col gap-1.5">
           <label className="text-sm text-text-secondary">메모</label>
           <Textarea
-            {...memoField}
-            ref={(el) => {
-              memoField.ref(el);
-              memoRef.current = el;
-            }}
+            {...register("memo")}
             rows={3}
             placeholder="풀이 아이디어, 주의할 점 등 ($x^2$ 처럼 수식 입력 가능)"
-          />
-          <MathToolbar
-            targetRef={memoRef}
-            value={memoValue ?? ""}
-            onChange={(next) => setValue("memo", next, { shouldDirty: true })}
           />
           <MathPreview text={memoValue} />
         </div>
@@ -510,19 +494,9 @@ export function ProblemForm({
         <div>
           <p className="mb-1.5 text-sm text-text-secondary">문제 내용 (직접 입력)</p>
           <Textarea
-            {...contentField}
-            ref={(el) => {
-              contentField.ref(el);
-              contentRef.current = el;
-            }}
+            {...register("content")}
             rows={4}
             placeholder="문제를 직접 입력하세요. 예) 함수 $f(x)=x^2+1$ 의 최솟값을 구하시오."
-          />
-          <MathToolbar
-            targetRef={contentRef}
-            value={contentValue ?? ""}
-            onChange={(next) => setValue("content", next, { shouldDirty: true })}
-            className="mt-1.5"
           />
           <MathPreview text={contentValue} className="mt-1.5" />
         </div>
@@ -543,19 +517,9 @@ export function ProblemForm({
         <div>
           <p className="mb-1.5 text-sm text-text-secondary">해설 내용 (직접 입력)</p>
           <Textarea
-            {...solutionContentField}
-            ref={(el) => {
-              solutionContentField.ref(el);
-              solutionContentRef.current = el;
-            }}
+            {...register("solution_content")}
             rows={4}
             placeholder="해설을 직접 입력하세요. (선택)"
-          />
-          <MathToolbar
-            targetRef={solutionContentRef}
-            value={solutionContentValue ?? ""}
-            onChange={(next) => setValue("solution_content", next, { shouldDirty: true })}
-            className="mt-1.5"
           />
           <MathPreview text={solutionContentValue} className="mt-1.5" />
         </div>
