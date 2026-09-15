@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { MathToolbar } from "@/components/ui/math-toolbar";
 import { renderMath } from "@/lib/math-render";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +19,8 @@ export function TagInput({
   className?: string;
 }) {
   const [draft, setDraft] = useState("");
+  const [toolbarOpen, setToolbarOpen] = useState(false);
+  const draftRef = useRef<HTMLInputElement>(null);
 
   function commitDraft() {
     const trimmed = draft.trim();
@@ -41,36 +44,43 @@ export function TagInput({
   }
 
   return (
-    <div
-      className={cn(
-        "flex flex-wrap items-center gap-1.5 rounded-sm border border-border bg-bg px-2 py-1.5 focus-within:border-accent",
-        className
-      )}
-    >
-      {value.map((tag) => (
-        <span
-          key={tag}
-          className="inline-flex items-center gap-1 rounded-sm bg-accent-soft px-2 py-0.5 text-xs text-accent"
-        >
-          {renderMath(tag, tag)}
-          <button
-            type="button"
-            onClick={() => removeTag(tag)}
-            aria-label={`${tag} 태그 삭제`}
-            className="hover:opacity-70"
+    <div className="flex flex-col gap-1.5">
+      <div
+        className={cn(
+          "flex flex-wrap items-center gap-1.5 rounded-sm border border-border bg-bg px-2 py-1.5 focus-within:border-accent",
+          className
+        )}
+      >
+        {value.map((tag) => (
+          <span
+            key={tag}
+            className="inline-flex items-center gap-1 rounded-sm bg-accent-soft px-2 py-0.5 text-xs text-accent"
           >
-            <X size={12} strokeWidth={2} />
-          </button>
-        </span>
-      ))}
-      <Input
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onBlur={commitDraft}
-        placeholder={value.length === 0 ? placeholder : ""}
-        className="min-w-[100px] flex-1 border-none bg-transparent p-0 text-sm focus:border-none focus:outline-none"
-      />
+            {renderMath(tag, tag)}
+            <button
+              type="button"
+              onClick={() => removeTag(tag)}
+              aria-label={`${tag} 태그 삭제`}
+              className="hover:opacity-70"
+            >
+              <X size={12} strokeWidth={2} />
+            </button>
+          </span>
+        ))}
+        <Input
+          ref={draftRef}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onFocus={() => setToolbarOpen(true)}
+          onBlur={commitDraft}
+          placeholder={value.length === 0 ? placeholder : ""}
+          className="min-w-[100px] flex-1 border-none bg-transparent p-0 text-sm focus:border-none focus:outline-none"
+        />
+      </div>
+      {toolbarOpen && (
+        <MathToolbar targetRef={draftRef} value={draft} onChange={setDraft} />
+      )}
     </div>
   );
 }

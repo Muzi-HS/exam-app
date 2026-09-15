@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { renderMath } from "@/lib/math-render";
 import type { SubjectColor } from "@/lib/subject-colors";
 
 export interface ChipOption<T extends string> {
@@ -58,7 +59,7 @@ export function FilterChipGroup<T extends string>({
                   : "border-border text-text-secondary hover:bg-accent-soft hover:text-text-primary"
             )}
           >
-            {opt.label}
+            {renderMath(opt.label, opt.value)}
           </button>
         );
       })}
