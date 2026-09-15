@@ -389,55 +389,72 @@ returns boolean as $$
   );
 $$ language sql stable;
 
+drop policy if exists "profiles_self" on profiles;
 create policy "profiles_self" on profiles
   for all using (auth.uid() = id) with check (auth.uid() = id);
 
+drop policy if exists "math_subjects_shared" on math_subjects;
 create policy "math_subjects_shared" on math_subjects
   for all using (is_shared_account()) with check (is_shared_account());
 
+drop policy if exists "math_topics_shared" on math_topics;
 create policy "math_topics_shared" on math_topics
   for all using (is_shared_account()) with check (is_shared_account());
 
+drop policy if exists "math_problems_shared" on math_problems;
 create policy "math_problems_shared" on math_problems
   for all using (is_shared_account()) with check (is_shared_account());
 
+drop policy if exists "problem_images_shared" on problem_images;
 create policy "problem_images_shared" on problem_images
   for all using (is_shared_account()) with check (is_shared_account());
 
+drop policy if exists "problem_memos_shared" on problem_memos;
 create policy "problem_memos_shared" on problem_memos
   for all using (is_shared_account()) with check (is_shared_account());
 
+drop policy if exists "tags_shared" on tags;
 create policy "tags_shared" on tags
   for all using (is_shared_account()) with check (is_shared_account());
 
+drop policy if exists "problem_tags_shared" on problem_tags;
 create policy "problem_tags_shared" on problem_tags
   for all using (is_shared_account()) with check (is_shared_account());
 
+drop policy if exists "mindmap_topics_shared" on mindmap_topics;
 create policy "mindmap_topics_shared" on mindmap_topics
   for all using (is_shared_account()) with check (is_shared_account());
 
+drop policy if exists "mindmap_nodes_shared" on mindmap_nodes;
 create policy "mindmap_nodes_shared" on mindmap_nodes
   for all using (is_shared_account()) with check (is_shared_account());
 
+drop policy if exists "concept_questions_shared" on concept_questions;
 create policy "concept_questions_shared" on concept_questions
   for all using (is_shared_account()) with check (is_shared_account());
 
+drop policy if exists "keyword_note_topics_shared" on keyword_note_topics;
 create policy "keyword_note_topics_shared" on keyword_note_topics
   for all using (is_shared_account()) with check (is_shared_account());
 
+drop policy if exists "keyword_note_concepts_shared" on keyword_note_concepts;
 create policy "keyword_note_concepts_shared" on keyword_note_concepts
   for all using (is_shared_account()) with check (is_shared_account());
 
 -- 이해도/즐겨찾기/오답노트는 계정별 소유 데이터라 owner-only 그대로 유지합니다.
+drop policy if exists "problem_progress_owner" on problem_progress;
 create policy "problem_progress_owner" on problem_progress
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+drop policy if exists "progress_history_owner" on progress_history;
 create policy "progress_history_owner" on progress_history
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+drop policy if exists "study_sessions_owner" on study_sessions;
 create policy "study_sessions_owner" on study_sessions
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+drop policy if exists "study_session_items_owner" on study_session_items;
 create policy "study_session_items_owner" on study_session_items
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
@@ -449,15 +466,19 @@ insert into storage.buckets (id, name, public)
 values ('problem-images', 'problem-images', true)
 on conflict (id) do nothing;
 
+drop policy if exists "problem_images_storage_shared_select" on storage.objects;
 create policy "problem_images_storage_shared_select" on storage.objects
   for select using (bucket_id = 'problem-images' and is_shared_account());
 
+drop policy if exists "problem_images_storage_shared_insert" on storage.objects;
 create policy "problem_images_storage_shared_insert" on storage.objects
   for insert with check (bucket_id = 'problem-images' and is_shared_account());
 
+drop policy if exists "problem_images_storage_shared_update" on storage.objects;
 create policy "problem_images_storage_shared_update" on storage.objects
   for update using (bucket_id = 'problem-images' and is_shared_account());
 
+drop policy if exists "problem_images_storage_shared_delete" on storage.objects;
 create policy "problem_images_storage_shared_delete" on storage.objects
   for delete using (bucket_id = 'problem-images' and is_shared_account());
 
