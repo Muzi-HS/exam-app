@@ -8,13 +8,20 @@ import type { ReactNode } from "react";
 // 표시되므로, 화면이 깨지는 대신 무엇이 잘못됐는지 바로 알 수 있습니다.
 const MATH_RE = /(\$\$[^$]+\$\$|\$[^$]+\$)/g;
 
-export function renderMath(text: string, keyPrefix: string | number = "m"): ReactNode[] {
+// options.inlineOnly: true면 $$...$$ 로 써도 줄바꿈/스크롤 없이 한 줄짜리 작은
+// 수식으로 렌더링합니다. 태그 칩처럼 좁고 낮은 자리에 수식을 넣을 때 사용합니다.
+export function renderMath(
+  text: string,
+  keyPrefix: string | number = "m",
+  options?: { inlineOnly?: boolean }
+): ReactNode[] {
   return text.split(MATH_RE).flatMap<ReactNode>((part, i) => {
     if (!part) return [];
-    const isBlock = part.startsWith("$$") && part.endsWith("$$") && part.length > 3;
-    const isInline = !isBlock && part.startsWith("$") && part.endsWith("$") && part.length > 1;
-    if (!isBlock && !isInline) return [part];
-    const expr = isBlock ? part.slice(2, -2) : part.slice(1, -1);
+    const isDollarBlock = part.startsWith("$$") && part.endsWith("$$") && part.length > 3;
+    const isDollarInline = !isDollarBlock && part.startsWith("$") && part.endsWith("$") && part.length > 1;
+    if (!isDollarBlock && !isDollarInline) return [part];
+    const expr = isDollarBlock ? part.slice(2, -2) : part.slice(1, -1);
+    const isBlock = isDollarBlock && !options?.inlineOnly;
     const html = katex.renderToString(expr, { throwOnError: false, displayMode: isBlock });
     return (
       <span

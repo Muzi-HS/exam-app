@@ -48,7 +48,7 @@ export function FilterChipGroup<T extends string>({
             onClick={() => toggle(opt.value)}
             aria-pressed={active}
             className={cn(
-              "inline-flex items-center justify-center rounded-sm border font-medium transition-colors",
+              "inline-flex items-center justify-center rounded-sm border font-medium transition-colors [&_.katex]:text-[0.8em] [&_.katex-display]:my-0 [&_.katex-display]:overflow-visible",
               sizeClasses,
               opt.color
                 ? active
@@ -59,7 +59,7 @@ export function FilterChipGroup<T extends string>({
                   : "border-border text-text-secondary hover:bg-accent-soft hover:text-text-primary"
             )}
           >
-            {renderMath(opt.label, opt.value)}
+            {renderMath(opt.label, opt.value, { inlineOnly: true })}
           </button>
         );
       })}
