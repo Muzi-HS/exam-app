@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
   getPublicImageUrl,
@@ -83,6 +83,12 @@ interface EditFetchRow {
   math_topics: { subject_id: string };
   problem_images: { id: string; storage_path: string; image_type: "problem" | "solution"; order_index: number }[];
   problem_tags: { tags: { id: string; name: string } }[];
+  problem_memos: { id: string; content: string; order_index: number }[];
+}
+
+interface ExtraMemo {
+  id: string;
+  content: string;
 }
 
 export function ProblemForm({
@@ -121,7 +127,8 @@ export function ProblemForm({
           "id, topic_id, title, problem_number, content, solution_content, memo, youtube_url," +
             " math_topics!inner(subject_id)," +
             " problem_images(id, storage_path, image_type, order_index)," +
-            " problem_tags(tags(id, name))"
+            " problem_tags(tags(id, name))," +
+            " problem_memos(id, content, order_index)"
         )
         .eq("id", problemId as string)
         .single()
@@ -153,6 +160,7 @@ export function ProblemForm({
     },
   });
 
+  const [extraMemos, setExtraMemos] = useState<ExtraMemo[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [originalTags, setOriginalTags] = useState<{ id: string; name: string }[]>([]);
   const [existingProblemImages, setExistingProblemImages] = useState<ExistingImage[]>([]);
@@ -178,6 +186,11 @@ export function ProblemForm({
     });
     setTags(editData.problem_tags.map((pt) => pt.tags.name));
     setOriginalTags(editData.problem_tags.map((pt) => pt.tags));
+    setExtraMemos(
+      [...editData.problem_memos]
+        .sort((a, b) => a.order_index - b.order_index)
+        .map((m) => ({ id: m.id, content: m.content }))
+    );
     const toExisting = (type: "problem" | "solution") =>
       editData.problem_images
         .filter((img) => img.image_type === type)
@@ -198,6 +211,21 @@ export function ProblemForm({
     () => subjects?.find((s) => s.id === selectedSubjectId)?.math_topics ?? [],
     [subjects, selectedSubjectId]
   );
+
+  function addExtraMemo() {
+    setExtraMemos((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), content: "" },
+    ]);
+  }
+
+  function updateExtraMemo(id: string, content: string) {
+    setExtraMemos((prev) => prev.map((m) => (m.id === id ? { ...m, content } : m)));
+  }
+
+  function removeExtraMemo(id: string) {
+    setExtraMemos((prev) => prev.filter((m) => m.id !== id));
+  }
 
   function removeExistingImage(type: "problem" | "solution", image: ExistingImage) {
     setRemovedExisting((prev) => [...prev, image]);
@@ -280,6 +308,7 @@ export function ProblemForm({
       }
 
       await syncTags(newProblemId, userId, [], tags);
+      await syncMemos(newProblemId, userId, extraMemos);
 
       queryClient.invalidateQueries({ queryKey: ["math-problems"] });
       router.push(`/math/problems/${newProblemId}`);
@@ -351,6 +380,7 @@ export function ProblemForm({
       }
 
       await syncTags(targetId, userId, originalTags, tags);
+      await syncMemos(targetId, userId, extraMemos);
 
       queryClient.invalidateQueries({ queryKey: ["math-problems"] });
       queryClient.invalidateQueries({ queryKey: ["math-problem", targetId] });
@@ -398,6 +428,28 @@ export function ProblemForm({
           toRemove.map((t) => t.id)
         );
       if (unlinkError) throw unlinkError;
+    }
+  }
+
+  async function syncMemos(targetProblemId: string, userId: string, memos: ExtraMemo[]) {
+    const { error: deleteError } = await supabase
+      .from("problem_memos")
+      .delete()
+      .eq("problem_id", targetProblemId);
+    if (deleteError) throw deleteError;
+
+    const rows = memos
+      .map((m) => m.content.trim())
+      .filter((content) => content.length > 0)
+      .map((content, index) => ({
+        problem_id: targetProblemId,
+        user_id: userId,
+        content,
+        order_index: index,
+      }));
+    if (rows.length > 0) {
+      const { error: insertError } = await supabase.from("problem_memos").insert(rows);
+      if (insertError) throw insertError;
     }
   }
 
@@ -477,6 +529,41 @@ export function ProblemForm({
             placeholder="풀이 아이디어, 주의할 점 등 ($x^2$ 처럼 수식 입력 가능)"
           />
           <MathPreview text={memoValue} />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <label className="text-sm text-text-secondary">추가 메모</label>
+            <Button type="button" variant="secondary" onClick={addExtraMemo}>
+              <Plus size={14} strokeWidth={1.75} />
+              메모 추가
+            </Button>
+          </div>
+          {extraMemos.map((m, idx) => (
+            <div key={m.id} className="flex flex-col gap-1.5">
+              <div className="flex items-start gap-2">
+                <Textarea
+                  value={m.content}
+                  onChange={(e) => updateExtraMemo(m.id, e.target.value)}
+                  rows={3}
+                  placeholder={`추가 메모 ${idx + 1}`}
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => removeExtraMemo(m.id)}
+                  aria-label="추가 메모 삭제"
+                >
+                  <X size={15} strokeWidth={1.75} />
+                </Button>
+              </div>
+              <MathPreview text={m.content} />
+            </div>
+          ))}
+          <p className="text-xs text-text-secondary">
+            추가 메모는 문제 상세 화면에서 각각 별도의 글상자로 표시됩니다.
+          </p>
         </div>
 
         <div className="flex flex-col gap-1.5">

@@ -132,6 +132,19 @@ create table if not exists problem_images (
 
 create index if not exists idx_problem_images_problem on problem_images (problem_id, image_type);
 
+-- 문제 하나에 메모를 여러 개 추가로 남길 수 있게 하는 테이블입니다. math_problems.memo
+-- (원래 메모) 는 그대로 두고, 여기에는 "메모 추가"로 만든 추가 메모들이 순서대로 쌓입니다.
+create table if not exists problem_memos (
+  id uuid primary key default uuid_generate_v4(),
+  problem_id uuid not null references math_problems (id) on delete cascade,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  content text not null,
+  order_index integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_problem_memos_problem on problem_memos (problem_id, order_index);
+
 create table if not exists tags (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid not null references auth.users (id) on delete cascade,
@@ -351,6 +364,7 @@ alter table math_subjects enable row level security;
 alter table math_topics enable row level security;
 alter table math_problems enable row level security;
 alter table problem_images enable row level security;
+alter table problem_memos enable row level security;
 alter table tags enable row level security;
 alter table problem_tags enable row level security;
 alter table problem_progress enable row level security;
@@ -388,6 +402,9 @@ create policy "math_problems_shared" on math_problems
   for all using (is_shared_account()) with check (is_shared_account());
 
 create policy "problem_images_shared" on problem_images
+  for all using (is_shared_account()) with check (is_shared_account());
+
+create policy "problem_memos_shared" on problem_memos
   for all using (is_shared_account()) with check (is_shared_account());
 
 create policy "tags_shared" on tags

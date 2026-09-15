@@ -147,6 +147,33 @@ export interface Database {
           },
         ];
       };
+      problem_memos: {
+        Row: {
+          id: string;
+          problem_id: string;
+          user_id: string;
+          content: string;
+          order_index: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          problem_id: string;
+          user_id: string;
+          content: string;
+          order_index?: number;
+        };
+        Update: { content?: string; order_index?: number };
+        Relationships: [
+          {
+            foreignKeyName: "problem_memos_problem_id_fkey";
+            columns: ["problem_id"];
+            isOneToOne: false;
+            referencedRelation: "math_problems";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       tags: {
         Row: { id: string; user_id: string; name: string; created_at: string };
         Insert: { id?: string; user_id: string; name: string };

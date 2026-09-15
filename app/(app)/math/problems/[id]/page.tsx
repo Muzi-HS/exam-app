@@ -4,7 +4,16 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Youtube, ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  Youtube,
+  ArrowLeft,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { getPublicImageUrl, removeProblemImages } from "@/lib/supabase/storage";
 import { renderMath } from "@/lib/math-render";
@@ -38,6 +47,7 @@ interface ProblemDetailRow {
   math_topics: { id: string; name: string; math_subjects: { id: string; name: string } };
   problem_images: { id: string; storage_path: string; image_type: "problem" | "solution"; order_index: number }[];
   problem_tags: { tags: { id: string; name: string } }[];
+  problem_memos: { id: string; content: string; order_index: number }[];
 }
 
 interface ProblemDetailQueryRow {
@@ -52,6 +62,7 @@ interface ProblemDetailQueryRow {
   math_topics: { id: string; name: string; math_subjects: { id: string; name: string } };
   problem_images: { id: string; storage_path: string; image_type: "problem" | "solution"; order_index: number }[];
   problem_tags: { tags: { id: string; name: string } }[];
+  problem_memos: { id: string; content: string; order_index: number }[];
 }
 
 export default function ProblemDetailPage() {
@@ -64,6 +75,7 @@ export default function ProblemDetailPage() {
   const [statusPending, setStatusPending] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [memosCollapsed, setMemosCollapsed] = useState(false);
 
   const { data: problem, isLoading, error } = useQuery({
     queryKey: ["math-problem", problemId],
@@ -79,7 +91,8 @@ export default function ProblemDetailPage() {
           "id, title, problem_number, content, solution_content, memo, youtube_url, topic_id," +
             " math_topics!inner(id, name, math_subjects!inner(id, name))," +
             " problem_images(id, storage_path, image_type, order_index)," +
-            " problem_tags(tags(id, name))"
+            " problem_tags(tags(id, name))," +
+            " problem_memos(id, content, order_index)"
         )
         .eq("id", problemId)
         .single()
@@ -220,6 +233,8 @@ export default function ProblemDetailPage() {
   }
 
   const tags = problem.problem_tags.map((pt) => pt.tags);
+  const extraMemos = [...problem.problem_memos].sort((a, b) => a.order_index - b.order_index);
+  const memoCount = (problem.memo ? 1 : 0) + extraMemos.length;
 
   return (
     <div className="flex flex-col gap-4">
@@ -295,10 +310,38 @@ export default function ProblemDetailPage() {
           </div>
         )}
 
-        {problem.memo && (
-          <p className="whitespace-pre-wrap rounded-sm bg-bg p-3 text-sm text-text-secondary">
-            {renderMath(problem.memo)}
-          </p>
+        {memoCount > 0 && (
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => setMemosCollapsed((v) => !v)}
+              className="inline-flex w-fit items-center gap-1 text-sm font-medium text-text-secondary hover:text-text-primary"
+            >
+              {memosCollapsed ? (
+                <ChevronDown size={15} strokeWidth={1.75} />
+              ) : (
+                <ChevronUp size={15} strokeWidth={1.75} />
+              )}
+              메모{memoCount > 1 ? ` (${memoCount})` : ""}
+            </button>
+            {!memosCollapsed && (
+              <div className="flex flex-col gap-2">
+                {problem.memo && (
+                  <p className="whitespace-pre-wrap rounded-sm bg-bg p-3 text-sm text-text-secondary">
+                    {renderMath(problem.memo)}
+                  </p>
+                )}
+                {extraMemos.map((m) => (
+                  <p
+                    key={m.id}
+                    className="whitespace-pre-wrap rounded-sm bg-bg p-3 text-sm text-text-secondary"
+                  >
+                    {renderMath(m.content, m.id)}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         {problem.youtube_url && (
