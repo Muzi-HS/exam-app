@@ -133,7 +133,6 @@ export default function ProblemsPage() {
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Link href="/math/problems/import" className="inline-flex min-h-10 items-center px-2 text-sm text-accent">자료 등록</Link>
           <Button
             type="button"
             variant={selectionMode ? "secondary" : "ghost"}
