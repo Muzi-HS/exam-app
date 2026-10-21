@@ -28,6 +28,8 @@ export function DataExport() {
         studySessions,
         studySessionItems,
         problemImages,
+        pastExamCategories,
+        pastExamProblems,
       ] = await Promise.all([
         supabase.from("math_subjects").select("*"),
         supabase.from("math_topics").select("*"),
@@ -41,6 +43,8 @@ export function DataExport() {
         supabase.from("study_sessions").select("*"),
         supabase.from("study_session_items").select("*"),
         supabase.from("problem_images").select("storage_path"),
+        supabase.from("past_exam_categories").select("*"),
+        supabase.from("past_exam_problems").select("*"),
       ]);
 
       const results = [
@@ -56,6 +60,8 @@ export function DataExport() {
         studySessions,
         studySessionItems,
         problemImages,
+        pastExamCategories,
+        pastExamProblems,
       ];
       const failed = results.find((r) => r.error);
       if (failed?.error) throw failed.error;
@@ -72,6 +78,8 @@ export function DataExport() {
         math_subjects: subjects.data,
         math_topics: topics.data,
         math_problems: problems.data,
+        past_exam_categories: pastExamCategories.data,
+        past_exam_problems: pastExamProblems.data,
         tags: tagsRes.data,
         problem_tags: problemTags.data,
         mindmap_topics: mindmapTopics.data,

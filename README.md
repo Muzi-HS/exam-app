@@ -34,6 +34,14 @@ Next.js 14(App Router) + TypeScript + Tailwind CSS + Supabase(DB·Auth·Storage)
 
 ## 2. 로컬 개발 환경 설정
 
+기존 DB에 수학교육 **기출문제** 메뉴를 추가하려면 SQL Editor에서
+`supabase/migrations/202610210001_past_exams.sql`을 실행하세요.
+신규 DB는 `supabase/schema.sql`에 같은 내용이 포함되어 있습니다.
+요청된 대분류·중분류·세부항목 45개가 등록되며, 재실행해도 수정한 분류 이름은 유지됩니다.
+`/math-education/past-exams`에서 분류 필터·검색, 문제 등록·수정·삭제,
+문제/해설 텍스트·수식·이미지, 연도·출처·문제번호·유튜브 링크·메모를 관리할 수 있습니다.
+목록의 **분류 수정**에서 분류를 선택하면 이름을 바꿀 수 있습니다.
+
 ```bash
 npm install
 cp .env.local.example .env.local
