@@ -30,6 +30,7 @@ export interface Database {
           id: string; user_id: string; category_id: string; title: string;
           year: number | null; source: string; problem_number: string;
           content: string; solution_content: string; memo: string; youtube_url: string;
+          keywords: string[];
           problem_images: string[]; solution_images: string[];
           created_at: string; updated_at: string;
         };
@@ -37,12 +38,14 @@ export interface Database {
           id?: string; user_id: string; category_id: string; title: string;
           year?: number | null; source?: string; problem_number?: string;
           content?: string; solution_content?: string; memo?: string; youtube_url?: string;
+          keywords?: string[];
           problem_images?: string[]; solution_images?: string[];
         };
         Update: {
           category_id?: string; title?: string; year?: number | null; source?: string;
           problem_number?: string; content?: string; solution_content?: string;
           memo?: string; youtube_url?: string; problem_images?: string[]; solution_images?: string[];
+          keywords?: string[];
         };
         Relationships: [];
       };

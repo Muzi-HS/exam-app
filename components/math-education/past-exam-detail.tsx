@@ -47,12 +47,13 @@ export function PastExamDetail({ id }: { id: string }) {
     <h2 className="text-lg font-semibold">{row.title}</h2>
     <p className="text-sm text-text-secondary">{[row.year && `${row.year}년`, row.source, row.problem_number && `${row.problem_number}번`].filter(Boolean).join(" · ")}</p>
     <p className="text-sm text-text-secondary">{categoryPath(categories.data ?? [], row.category_id).map((item) => item.name).join(" / ")}</p>
+    {!!row.keywords?.length && <div className="flex flex-wrap gap-1.5" aria-label="키워드">{row.keywords.map((keyword) => <span key={keyword} className="rounded-sm bg-accent-soft px-2 py-1 text-xs text-accent">{renderMath(keyword)}</span>)}</div>}
     <ProblemImageViewer problemContent={row.content} solutionContent={row.solution_content}
       problemImages={row.problem_images.map((path) => ({ id: path, url: getPublicImageUrl(supabase, path) }))}
       solutionImages={row.solution_images.map((path) => ({ id: path, url: getPublicImageUrl(supabase, path) }))} />
     {row.memo && <Card><p className="mb-2 text-sm text-text-secondary">메모</p><div className="whitespace-pre-wrap text-sm">{renderMath(row.memo)}</div></Card>}
     {/^https?:\/\/(www\.|m\.)?(youtube\.com|youtu\.be)\//.test(row.youtube_url) && <a href={row.youtube_url} target="_blank" rel="noopener noreferrer" className="text-sm text-accent">유튜브 해설 보기</a>}
     {error && <p role="alert" className="text-sm text-status-unknown">{error}</p>}
-    <ConfirmDialog open={confirm} title="기출문제 삭제" description="문제와 등록된 이미지를 삭제합니다. 이 작업은 되돌릴 수 없습니다." loading={deleting} onConfirm={remove} onCancel={() => { if (!deleting) setConfirm(false); }} />
+    <ConfirmDialog open={confirm} title="문제 삭제" description="문제와 등록된 이미지를 삭제합니다. 이 작업은 되돌릴 수 없습니다." loading={deleting} onConfirm={remove} onCancel={() => { if (!deleting) setConfirm(false); }} />
   </div>;
 }

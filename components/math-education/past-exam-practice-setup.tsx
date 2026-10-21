@@ -41,8 +41,8 @@ export function PastExamPracticeSetup() {
     finally { setStarting(false); }
   }
   return <div className="flex flex-col gap-4">
-    <h2 className="text-lg font-semibold">기출문제 연습</h2>
-    <p className="text-sm text-text-secondary">기출문제에 등록한 문제를 한 문제씩 풀고 해설을 확인하세요. 분류를 선택하지 않으면 전체 문제로 연습합니다.</p>
+    <h2 className="text-lg font-semibold">문제 연습</h2>
+    <p className="text-sm text-text-secondary">문제에 등록한 문제를 한 문제씩 풀고 해설을 확인하세요. 분류를 선택하지 않으면 전체 문제로 연습합니다.</p>
     {categories.error || problems.error ? <p role="alert">{pastExamErrorMessage(categories.error ?? problems.error)}</p> :
       categories.isLoading || problems.isLoading ? <p>불러오는 중...</p> : <Card className="flex flex-col gap-4">
         <fieldset disabled={starting} className="flex min-w-0 flex-col gap-4">
@@ -52,7 +52,7 @@ export function PastExamPracticeSetup() {
           {count !== "all" && <Input aria-label="연습 문제 수" type="number" min={1} step={1} value={count} onChange={(event) => setCount(event.target.value)} />}
           {count !== "all" && Number(count) > candidates.length && <p className="text-xs text-text-secondary">등록된 {candidates.length}문제로 연습합니다.</p>}
           <label className="flex flex-col gap-1 text-sm">출제 순서<Select value={random ? "random" : "ordered"} onChange={(event) => setRandom(event.target.value === "random")}><option value="random">무작위</option><option value="ordered">목록 순서</option></Select></label>
-          {!candidates.length && <p className="text-sm text-text-secondary">선택한 분류에 등록된 문제가 없습니다. 기출문제에서 문제를 추가하거나 분류를 변경해 주세요.</p>}
+          {!candidates.length && <p className="text-sm text-text-secondary">선택한 분류에 등록된 문제가 없습니다. 문제에서 문제를 추가하거나 분류를 변경해 주세요.</p>}
           <Button onClick={start} disabled={invalidCount || !candidates.length}>{starting ? "시작하는 중..." : "연습 시작"}</Button>
         </fieldset>
       </Card>}

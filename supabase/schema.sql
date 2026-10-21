@@ -607,3 +607,8 @@ alter table public.study_session_items
   add constraint study_session_items_item_type_check
   check (item_type in ('math_problem', 'concept_question', 'past_exam_problem'));
 commit;
+
+
+-- Keywords for mathematics education problems. Keep existing source/link data.
+alter table public.past_exam_problems
+  add column if not exists keywords text[] not null default '{}';

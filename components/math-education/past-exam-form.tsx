@@ -12,14 +12,16 @@ import { Input, Textarea } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MathPreview } from "@/components/ui/math-preview";
+import { TagInput } from "@/components/math/tag-input";
 
-const empty = { title: "", year: "", source: "", problem_number: "", content: "", solution_content: "", memo: "", youtube_url: "" };
+const empty = { title: "", year: "", problem_number: "", content: "", solution_content: "", memo: "" };
 
 export function PastExamForm({ id }: { id?: string }) {
   const router = useRouter();
   const cache = useQueryClient();
   const categories = usePastExamCategories();
   const [fields, setFields] = useState(empty);
+  const [keywords, setKeywords] = useState<string[]>([]);
   const [category, setCategory] = useState("");
   const [existing, setExisting] = useState<{ problem: string[]; solution: string[] }>({ problem: [], solution: [] });
   const [pending, setPending] = useState<{ problem: PendingImage[]; solution: PendingImage[] }>({ problem: [], solution: [] });
@@ -33,8 +35,9 @@ export function PastExamForm({ id }: { id?: string }) {
   useEffect(() => {
     if (!problem.data) return;
     const row = problem.data;
-    setFields({ title: row.title, year: row.year?.toString() ?? "", source: row.source, problem_number: row.problem_number,
-      content: row.content, solution_content: row.solution_content, memo: row.memo, youtube_url: row.youtube_url });
+    setFields({ title: row.title, year: row.year?.toString() ?? "", problem_number: row.problem_number,
+      content: row.content, solution_content: row.solution_content, memo: row.memo });
+    setKeywords(row.keywords ?? []);
     setCategory(row.category_id);
     setExisting({ problem: row.problem_images, solution: row.solution_images });
   }, [problem.data]);
@@ -46,9 +49,6 @@ export function PastExamForm({ id }: { id?: string }) {
     if (!fields.title.trim()) { setError("제목을 입력해 주세요."); return; }
     if (!fields.content.trim() && !existing.problem.length && !pending.problem.length) {
       setError("문제 내용이나 이미지를 최소 하나 등록해 주세요."); return;
-    }
-    if (fields.youtube_url && !/^https?:\/\/(www\.|m\.)?(youtube\.com|youtu\.be)\//.test(fields.youtube_url)) {
-      setError("유효한 유튜브 URL을 입력해 주세요."); return;
     }
     setSaving(true);
     const supabase = createClient();
@@ -67,6 +67,7 @@ export function PastExamForm({ id }: { id?: string }) {
         }
       }
       const payload = { ...fields, title: fields.title.trim(), year: fields.year ? Number(fields.year) : null,
+        keywords: [...new Set(keywords.map((keyword) => keyword.trim()).filter(Boolean))],
         category_id: category, problem_images: images.problem, solution_images: images.solution };
       const result = id
         ? await supabase.from("past_exam_problems").update(payload).eq("id", id).select("id").single()
@@ -86,15 +87,19 @@ export function PastExamForm({ id }: { id?: string }) {
   if (categories.error || problem.error) return <div className="flex flex-col items-start gap-3"><p role="alert">{pastExamErrorMessage(categories.error ?? problem.error)}</p><Button variant="secondary" onClick={() => { void categories.refetch(); if (id) void problem.refetch(); }}>다시 불러오기</Button></div>;
   if (categories.isLoading || (id && problem.isLoading)) return <p>불러오는 중...</p>;
   return <form onSubmit={save} className="flex flex-col gap-4">
-    <h2 className="text-lg font-semibold">기출문제 {id ? "수정" : "등록"}</h2>
+    <h2 className="text-lg font-semibold">문제 {id ? "수정" : "등록"}</h2>
     <fieldset disabled={saving} className="flex min-w-0 flex-col gap-4">
       <Card className="flex flex-col gap-4">
         <CategoryPicker categories={categories.data ?? []} value={category} onChange={setCategory} required />
-        {([['title', '제목 *'], ['year', '출제 연도'], ['source', '출처'], ['problem_number', '문제번호'], ['youtube_url', '유튜브 URL']] as const).map(([key, label]) =>
+        {([['title', '제목 *'], ['year', '출제 연도'], ['problem_number', '문제번호']] as const).map(([key, label]) =>
           <label key={key} className="flex flex-col gap-1 text-sm text-text-secondary">{label}<Input value={fields[key]}
-            required={key === "title"} type={key === "year" ? "number" : key === "youtube_url" ? "url" : "text"}
+            required={key === "title"} type={key === "year" ? "number" : "text"}
             min={key === "year" ? 1900 : undefined} max={key === "year" ? 2200 : undefined} step={key === "year" ? 1 : undefined}
             onChange={(event) => setFields({ ...fields, [key]: event.target.value })} /></label>)}
+        <div className="flex flex-col gap-1.5"><p className="text-sm text-text-secondary">키워드</p>
+          <TagInput value={keywords} onChange={setKeywords} placeholder="키워드 입력 후 Enter 또는 쉼표" />
+          <p className="text-xs text-text-secondary">여러 키워드를 추가할 수 있으며 목록에서 검색할 수 있습니다.</p>
+        </div>
       </Card>
       {([['problem', 'content', '문제'], ['solution', 'solution_content', '해설']] as const).map(([kind, key, label]) => <Card key={kind} className="flex flex-col gap-3">
         <label className="flex flex-col gap-1 text-sm text-text-secondary">{label} 내용<Textarea rows={5} value={fields[key]} onChange={(event) => setFields({ ...fields, [key]: event.target.value })} placeholder="텍스트와 $...$ 수식을 입력할 수 있습니다." /></label>

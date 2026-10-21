@@ -57,7 +57,7 @@ export default async function DashboardPage() {
     {
       href: "/math-education/past-exams",
       label: "수학교육",
-      description: "분류별 기출문제와 빵꾸노트",
+      description: "분류별 문제와 빵꾸노트",
       icon: Shapes,
       stat: `개념 ${summary.mathEduConcepts}개`,
     },

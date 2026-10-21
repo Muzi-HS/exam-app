@@ -17,7 +17,7 @@ export async function createPastExamPractice(supabase: SupabaseClient<Database>,
   })));
   if (itemsError) {
     await supabase.from("study_sessions").delete().eq("id", session.id);
-    if (itemsError.code === "23514") throw new Error("기출문제 연습용 추가 SQL(202610210002_past_exam_practice.sql)을 먼저 적용해 주세요.");
+    if (itemsError.code === "23514") throw new Error("문제 연습용 추가 SQL(202610210002_past_exam_practice.sql)을 먼저 적용해 주세요.");
     throw itemsError;
   }
   return session.id;
@@ -27,7 +27,7 @@ export async function fetchPastExamPractice(supabase: SupabaseClient<Database>, 
   const { data: session, error } = await supabase.from("study_sessions").select("*").eq("id", id)
     .eq("domain", "math_education").eq("mode", "practice").single();
   if (error) throw error;
-  if (session.filter_json?.kind !== "past_exam") throw new Error("기출문제 연습 세션이 아닙니다. 연습 설정에서 새로 시작해 주세요.");
+  if (session.filter_json?.kind !== "past_exam") throw new Error("문제 연습 세션이 아닙니다. 연습 설정에서 새로 시작해 주세요.");
   const { data: items, error: itemsError } = await supabase.from("study_session_items").select("*")
     .eq("session_id", id).eq("item_type", "past_exam_problem").order("order_index");
   if (itemsError) throw itemsError;
