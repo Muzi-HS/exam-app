@@ -62,8 +62,8 @@ Next.js 14(App Router) + TypeScript + Tailwind CSS + Supabase(DB·Auth·Storage)
 
 수학교육의 일괄 등록 메뉴는 제거되었습니다.
 
-전공수학 mathhm 자료는 `python scripts/prepare-mathhm-import.py <자료 폴더> <출력 JSON 경로>`로
-등록 파일을 준비한 뒤, 로그인된 앱의 **전공수학 → 문제 → 자료 등록**에서 선택합니다.
+전공수학의 자료 등록 버튼과 전용 화면은 제거되었습니다. 기존 자료 등록 주소는 문제 목록으로 이동합니다.
+mathhm 자료 준비 스크립트(`scripts/prepare-mathhm-import.py`)는 로컬 도구로 남아 있습니다.
 해석학 59번, 정수론 25번, 복소함수론 27번까지는 준비 단계에서 제외합니다.
 제목은 `정현민 전공수학`으로 통일하고 단원 LaTeX·별도 문제번호·유튜브 URL·문제/해설 이미지를 보존합니다.
 원본에 유튜브 URL이 없는 문제는 빈칸으로 등록합니다.

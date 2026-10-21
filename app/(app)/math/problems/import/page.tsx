@@ -1,5 +1,5 @@
-import { MathhmImportPage } from "@/components/math/mathhm-import-page";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <MathhmImportPage />;
+  redirect("/math/problems");
 }
