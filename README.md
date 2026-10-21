@@ -56,6 +56,9 @@ Next.js 14(App Router) + TypeScript + Tailwind CSS + Supabase(DB·Auth·Storage)
 
 연습 설정과 문제 목록에서 키워드를 여러 개 선택할 수 있습니다.
 선택한 키워드 중 하나라도 포함된 문제를 대상으로 하며, 분류 조건과 함께 적용됩니다.
+연습에서는 시작·종료 연도로 범위를 제한할 수 있고 양 끝 연도를 모두 포함합니다.
+문제 목록과 기본 연습 순서는 대분류·중분류·세부항목의 지정 순서 → 연도 오름차순 → 문제번호 오름차순입니다.
+연도 미입력 문제는 연도 제한이 없을 때 포함되며 같은 분류의 마지막에 표시됩니다.
 
 이미지 ZIP을 일괄 등록할 때는 `scripts/prepare-math-education-import.py`로 등록용 JSON을 준비합니다.
 `python scripts/prepare-math-education-import.py <ZIP 경로> <출력 JSON 경로>`를 실행한 뒤

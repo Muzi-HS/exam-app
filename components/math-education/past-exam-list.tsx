@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Plus, Search, ListChecks, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import { categoryPath, categoryTargets, matchesCategories, matchesKeywords, PAST_EXAMS_PATH, PAST_EXAM_PRACTICE_PATH, EMPTY_CATEGORY_SELECTION, type CategorySelection } from "@/lib/past-exams";
+import { categoryPath, categoryTargets, matchesCategories, matchesKeywords, sortPastExamProblems, PAST_EXAMS_PATH, PAST_EXAM_PRACTICE_PATH, EMPTY_CATEGORY_SELECTION, type CategorySelection } from "@/lib/past-exams";
 import { PastExamKeywordFilters } from "./past-exam-keyword-filters";
 import { createPastExamPractice, orderPracticeIds } from "@/lib/past-exam-practice";
 import { PastExamCategoryFilters } from "./past-exam-category-filters";
@@ -41,20 +41,20 @@ export function PastExamList() {
     return data;
   }});
   const targets = categoryTargets(categories.data ?? [], selection);
-  const items = (problems.data ?? []).filter((item) =>
+  const items = sortPastExamProblems((problems.data ?? []).filter((item) =>
     matchesCategories(categories.data ?? [], item.category_id, targets) &&
     matchesKeywords(item.keywords ?? [], keywords) &&
-    `${item.title} ${(item.keywords ?? []).join(" ")} ${item.year ?? ""} ${item.problem_number}`.toLocaleLowerCase().includes(debouncedSearch.trim().toLocaleLowerCase()));
+    `${item.title} ${(item.keywords ?? []).join(" ")} ${item.year ?? ""} ${item.problem_number}`.toLocaleLowerCase().includes(debouncedSearch.trim().toLocaleLowerCase())), categories.data ?? []);
   function changeFilters(next: CategorySelection) {
     setSelection(next); setPage(0); setSelectedIds(new Set());
   }
   async function practice(selectedOnly: boolean) {
     if (starting) return;
-    const ids = selectedOnly ? [...selectedIds] : items.map((item) => item.id);
+    const ids = items.filter((item) => !selectedOnly || selectedIds.has(item.id)).map((item) => item.id);
     if (!ids.length) return;
     setStarting(true); setError("");
     try {
-      const id = await createPastExamPractice(createClient(), orderPracticeIds(ids, "all", true), targets, keywords);
+      const id = await createPastExamPractice(createClient(), orderPracticeIds(ids, "all", false), targets, keywords);
       router.push(`${PAST_EXAM_PRACTICE_PATH}/${id}`);
     } catch (error) { setError(pastExamErrorMessage(error)); }
     finally { setStarting(false); }

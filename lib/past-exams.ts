@@ -11,6 +11,33 @@ export function matchesKeywords(keywords: string[], selected: string[]) {
   return !selected.length || selected.some((keyword) => keywords.includes(keyword));
 }
 
+export interface PracticeYearRange { from: number | null; to: number | null }
+
+export function matchesYearRange(year: number | null, range: PracticeYearRange) {
+  if (range.from === null && range.to === null) return true;
+  if (year === null) return false;
+  return (range.from === null || year >= range.from) && (range.to === null || year <= range.to);
+}
+
+export function sortPastExamProblems<T extends { id: string; category_id: string; year: number | null; problem_number: string; title: string }>(
+  problems: T[], categories: PastExamCategory[]
+): T[] {
+  const collator = new Intl.Collator("ko", { numeric: true });
+  const paths = new Map(categories.map((category) => [category.id, categoryPath(categories, category.id)]));
+  return [...problems].sort((a, b) => {
+    const left = paths.get(a.category_id) ?? [];
+    const right = paths.get(b.category_id) ?? [];
+    for (let depth = 0; depth < Math.max(left.length, right.length); depth++) {
+      const difference = (left[depth]?.order_index ?? Number.MAX_SAFE_INTEGER) - (right[depth]?.order_index ?? Number.MAX_SAFE_INTEGER);
+      if (difference) return difference;
+    }
+    return (a.year ?? Number.MAX_SAFE_INTEGER) - (b.year ?? Number.MAX_SAFE_INTEGER)
+      || (Number(!a.problem_number) - Number(!b.problem_number))
+      || collator.compare(a.problem_number, b.problem_number)
+      || collator.compare(a.title, b.title) || a.id.localeCompare(b.id);
+  });
+}
+
 // A narrower choice replaces its ancestor only in that branch of the tree.
 export function categoryTargets(categories: PastExamCategory[], selection: CategorySelection): string[] {
   const [roots, groups, leaves] = selection;
