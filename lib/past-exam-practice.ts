@@ -2,14 +2,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 import type { PastExam } from "@/lib/past-exams";
 
-export async function createPastExamPractice(supabase: SupabaseClient<Database>, ids: string[], categoryIds: string[] = []) {
+export async function createPastExamPractice(supabase: SupabaseClient<Database>, ids: string[], categoryIds: string[] = [], keywords: string[] = []) {
   const uniqueIds = [...new Set(ids)];
   if (!uniqueIds.length) throw new Error("연습할 문제를 선택해 주세요.");
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) throw new Error("로그인이 필요합니다.");
   const { data: session, error } = await supabase.from("study_sessions").insert({
     user_id: user.id, domain: "math_education", mode: "practice", item_count: uniqueIds.length,
-    filter_json: { kind: "past_exam", categoryIds },
+    filter_json: { kind: "past_exam", categoryIds, keywords },
   }).select("id").single();
   if (error) throw error;
   const { error: itemsError } = await supabase.from("study_session_items").insert(uniqueIds.map((id, index) => ({

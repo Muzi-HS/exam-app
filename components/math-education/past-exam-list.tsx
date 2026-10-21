@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { Plus, Search, ListChecks, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import { categoryPath, categoryTargets, matchesCategories, PAST_EXAMS_PATH, PAST_EXAM_PRACTICE_PATH, EMPTY_CATEGORY_SELECTION, type CategorySelection } from "@/lib/past-exams";
+import { categoryPath, categoryTargets, matchesCategories, matchesKeywords, PAST_EXAMS_PATH, PAST_EXAM_PRACTICE_PATH, EMPTY_CATEGORY_SELECTION, type CategorySelection } from "@/lib/past-exams";
+import { PastExamKeywordFilters } from "./past-exam-keyword-filters";
 import { createPastExamPractice, orderPracticeIds } from "@/lib/past-exam-practice";
 import { PastExamCategoryFilters } from "./past-exam-category-filters";
 import { ProblemRow } from "@/components/math/problem-row";
@@ -23,6 +24,7 @@ export function PastExamList() {
   const router = useRouter();
   const [category, setCategory] = useState("");
   const [selection, setSelection] = useState<CategorySelection>(EMPTY_CATEGORY_SELECTION);
+  const [keywords, setKeywords] = useState<string[]>([]);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [starting, setStarting] = useState(false);
@@ -41,6 +43,7 @@ export function PastExamList() {
   const targets = categoryTargets(categories.data ?? [], selection);
   const items = (problems.data ?? []).filter((item) =>
     matchesCategories(categories.data ?? [], item.category_id, targets) &&
+    matchesKeywords(item.keywords ?? [], keywords) &&
     `${item.title} ${(item.keywords ?? []).join(" ")} ${item.year ?? ""} ${item.problem_number}`.toLocaleLowerCase().includes(debouncedSearch.trim().toLocaleLowerCase()));
   function changeFilters(next: CategorySelection) {
     setSelection(next); setPage(0); setSelectedIds(new Set());
@@ -51,7 +54,7 @@ export function PastExamList() {
     if (!ids.length) return;
     setStarting(true); setError("");
     try {
-      const id = await createPastExamPractice(createClient(), orderPracticeIds(ids, "all", true), targets);
+      const id = await createPastExamPractice(createClient(), orderPracticeIds(ids, "all", true), targets, keywords);
       router.push(`${PAST_EXAM_PRACTICE_PATH}/${id}`);
     } catch (error) { setError(pastExamErrorMessage(error)); }
     finally { setStarting(false); }
@@ -70,6 +73,7 @@ export function PastExamList() {
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div><h2 className="text-lg font-semibold">문제 목록</h2><p className="mt-1 font-mono text-xs text-text-secondary">전체 {items.length}개</p></div>
       <div className="flex flex-wrap gap-2"><Button variant="secondary" onClick={() => setManaging(!managing)}>분류 수정</Button>
+        <Link href={`${PAST_EXAMS_PATH}/import`} className="inline-flex items-center px-2 text-sm text-accent">일괄 등록</Link>
         <Button variant={selectionMode ? "secondary" : "ghost"} onClick={() => { setSelectionMode(!selectionMode); setSelectedIds(new Set()); }}>{selectionMode ? <X size={15} /> : <ListChecks size={15} />}{selectionMode ? "선택 취소" : "문제 선택"}</Button>
         <Link className="inline-flex items-center gap-2 rounded-sm bg-accent px-4 py-2 text-sm text-bg" href={`${PAST_EXAMS_PATH}/new`}><Plus size={15} />문제 등록</Link></div>
     </div>
@@ -84,6 +88,7 @@ export function PastExamList() {
         </Card>}
         <div className="relative"><Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" /><Input className="pl-9" aria-label="문제 검색" placeholder="제목, 키워드, 연도, 문제번호 검색" value={search} onChange={(event) => { setSearch(event.target.value); setPage(0); setSelectedIds(new Set()); }} /></div>
         <PastExamCategoryFilters categories={categories.data ?? []} value={selection} onChange={changeFilters} />
+        <PastExamKeywordFilters keywords={(problems.data ?? []).flatMap((problem) => problem.keywords ?? [])} selected={keywords} onChange={(next) => { setKeywords(next); setPage(0); setSelectedIds(new Set()); }} />
         <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs text-text-secondary">{targets.length ? "선택한 분류" : "전체 분류"} · {items.length}문제</p><Button variant="secondary" disabled={!items.length || starting} onClick={() => practice(false)}>이 조건으로 연습</Button></div>
         {!items.length && <EmptyState title="등록된 문제가 없습니다" description="분류는 준비되어 있습니다. ‘문제 등록’에서 실제 문제를 추가해 주세요. 검색 중이라면 검색어나 분류를 변경해 보세요." />}
         <div className="flex flex-col gap-2">{items.slice(page * 24, (page + 1) * 24).map((item) => {

@@ -77,6 +77,7 @@ export function PastExamForm({ id }: { id?: string }) {
       const retained = [...images.problem, ...images.solution];
       await removeProblemImages(supabase, [...(problem.data?.problem_images ?? []), ...(problem.data?.solution_images ?? [])].filter((path) => !retained.includes(path)));
       await cache.invalidateQueries({ queryKey: ["past-exams"] });
+      await cache.invalidateQueries({ queryKey: ["past-exam-practice-candidates"] });
       await cache.invalidateQueries({ queryKey: ["past-exam", problemId] });
       router.push(`${PAST_EXAMS_PATH}/${problemId}`);
     } catch {

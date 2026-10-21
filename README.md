@@ -54,6 +54,15 @@ Next.js 14(App Router) + TypeScript + Tailwind CSS + Supabase(DB·Auth·Storage)
 추가로 실행하세요. 키워드는 상세 화면에 표시되고 목록 검색에도 포함됩니다.
 출처·유튜브 URL 입력 항목은 제거되었습니다.
 
+연습 설정과 문제 목록에서 키워드를 여러 개 선택할 수 있습니다.
+선택한 키워드 중 하나라도 포함된 문제를 대상으로 하며, 분류 조건과 함께 적용됩니다.
+
+이미지 ZIP을 일괄 등록할 때는 `scripts/prepare-math-education-import.py`로 등록용 JSON을 준비합니다.
+`python scripts/prepare-math-education-import.py <ZIP 경로> <출력 JSON 경로>`를 실행한 뒤
+로그인된 앱의 **문제 → 일괄 등록**에서 JSON을 선택합니다.
+등록 파일에는 제목(`2026 A 3번`), 별도 문제번호, 키워드, 분류, 문제/해설 이미지가 포함됩니다.
+동일 원본 문항은 고정 ID를 사용하며 재등록 시 기존 문항을 건너뜁니다.
+
 ```bash
 npm install
 cp .env.local.example .env.local

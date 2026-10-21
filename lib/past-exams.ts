@@ -7,6 +7,10 @@ export const PAST_EXAM_PRACTICE_PATH = "/math-education/practice";
 export type CategorySelection = [string[], string[], string[]];
 export const EMPTY_CATEGORY_SELECTION: CategorySelection = [[], [], []];
 
+export function matchesKeywords(keywords: string[], selected: string[]) {
+  return !selected.length || selected.some((keyword) => keywords.includes(keyword));
+}
+
 // A narrower choice replaces its ancestor only in that branch of the tree.
 export function categoryTargets(categories: PastExamCategory[], selection: CategorySelection): string[] {
   const [roots, groups, leaves] = selection;
