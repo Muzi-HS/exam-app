@@ -55,9 +55,9 @@ export default async function DashboardPage() {
       stat: `개념 ${summary.pedagogyConcepts}개`,
     },
     {
-      href: "/math-education/topics",
+      href: "/math-education/past-exams",
       label: "수학교육",
-      description: "마인드맵으로 정리하는 개념과 문제",
+      description: "분류별 기출문제와 빵꾸노트",
       icon: Shapes,
       stat: `개념 ${summary.mathEduConcepts}개`,
     },

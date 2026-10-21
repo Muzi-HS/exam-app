@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { categoryPath, PAST_EXAMS_PATH } from "@/lib/past-exams";
-import { CategoryPicker, usePastExamCategories } from "./past-exam-shared";
+import { CategoryPicker, usePastExamCategories, pastExamErrorMessage } from "./past-exam-shared";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -29,6 +29,9 @@ export function PastExamList() {
   const items = (problems.data ?? []).filter((item) =>
     (!category || categoryPath(categories.data ?? [], item.category_id).some((part) => part.id === category)) &&
     `${item.title} ${item.source} ${item.year ?? ""} ${item.problem_number}`.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
+  const selectedPath = categoryPath(categories.data ?? [], category);
+  const childCategories = (categories.data ?? []).filter((item) => item.parent_id === (category || null));
+  function selectCategory(id: string) { setCategory(id); setPage(0); }
   async function rename(id: string, name: string) {
     if (!name.trim()) return;
     setSaving(true); setError("");
@@ -45,7 +48,7 @@ export function PastExamList() {
       <div className="flex gap-2"><Button variant="secondary" onClick={() => setManaging(!managing)}>분류 수정</Button>
         <Link className="rounded-sm bg-accent px-4 py-2 text-sm text-bg" href={`${PAST_EXAMS_PATH}/new`}>문제 등록</Link></div>
     </div>
-    {(categories.error || problems.error) ? <EmptyState title="기출문제를 불러오지 못했습니다" description="데이터베이스 마이그레이션 적용 여부와 네트워크 연결을 확인해 주세요." /> :
+    {(categories.error || problems.error) ? <div className="flex flex-col items-start gap-3"><EmptyState title="기출문제를 불러오지 못했습니다" description={pastExamErrorMessage(categories.error ?? problems.error)} /><Button variant="secondary" onClick={() => { void categories.refetch(); void problems.refetch(); }}>다시 불러오기</Button></div> :
       categories.isLoading || problems.isLoading ? <p>불러오는 중...</p> : <>
         {managing && <Card className="flex flex-col gap-2">
           <p className="text-sm text-text-secondary">수정할 분류를 선택하고 이름을 변경하세요. 기존 문제에도 반영됩니다.</p>
@@ -56,9 +59,23 @@ export function PastExamList() {
           {error && <p role="alert" className="text-sm text-status-unknown">{error}</p>}
         </Card>}
         <CategoryPicker categories={categories.data ?? []} value={category} onChange={(id) => { setCategory(id); setPage(0); }} />
+        <Card className="flex flex-col gap-3">
+          <nav aria-label="기출문제 분류 경로" className="flex flex-wrap items-center gap-2 text-sm">
+            <button type="button" className="text-accent" onClick={() => selectCategory("")}>전체 분류</button>
+            {selectedPath.map((part) => <span key={part.id} className="flex items-center gap-2"><span aria-hidden="true">/</span><button type="button" className="text-accent" onClick={() => selectCategory(part.id)}>{part.name}</button></span>)}
+          </nav>
+          {childCategories.length > 0 ? <div className="grid gap-2 sm:grid-cols-2">
+            {childCategories.map((child) => {
+              const count = (problems.data ?? []).filter((problem) => categoryPath(categories.data ?? [], problem.category_id).some((part) => part.id === child.id)).length;
+              return <button key={child.id} type="button" onClick={() => selectCategory(child.id)} className="flex items-center justify-between gap-3 rounded-sm border border-border px-3 py-3 text-left text-sm hover:border-accent">
+                <span>{child.name}</span><span className="shrink-0 text-xs text-text-secondary">{count}문제 · 보기 →</span>
+              </button>;
+            })}
+          </div> : <p className="text-xs text-text-secondary">선택한 분류의 기출문제를 아래에서 확인할 수 있습니다.</p>}
+        </Card>
         <Input aria-label="기출문제 검색" placeholder="제목, 출처, 연도, 문제번호 검색" value={search} onChange={(event) => { setSearch(event.target.value); setPage(0); }} />
         <p className="text-xs text-text-secondary">전체 {items.length}개</p>
-        {!items.length && <EmptyState title="조건에 맞는 기출문제가 없습니다" description="분류를 변경하거나 새 문제를 등록해 보세요." />}
+        {!items.length && <EmptyState title="등록된 기출문제가 없습니다" description="분류는 준비되어 있습니다. ‘문제 등록’에서 실제 기출문제를 추가해 주세요. 검색 중이라면 검색어나 분류를 변경해 보세요." />}
         {items.slice(page * 24, (page + 1) * 24).map((item) => <Link key={item.id} href={`${PAST_EXAMS_PATH}/${item.id}`}>
           <Card className="flex flex-col gap-1 hover:border-accent"><p className="font-medium">{item.title}</p>
             <p className="text-xs text-text-secondary">{[item.year && `${item.year}년`, item.source, item.problem_number && `${item.problem_number}번`].filter(Boolean).join(" · ")}</p>

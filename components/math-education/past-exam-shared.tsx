@@ -11,9 +11,20 @@ export function usePastExamCategories() {
     queryFn: async () => {
       const { data, error } = await createClient().from("past_exam_categories").select("*").order("order_index");
       if (error) throw error;
+      if (!data?.length) {
+        throw new Error("분류 조회 결과가 0개입니다. 현재 앱이 연결된 Supabase 프로젝트에 분류가 등록되었는지와 로그인 계정의 공유 접근 권한을 확인해 주세요.");
+      }
       return data;
     },
   });
+}
+
+export function pastExamErrorMessage(error: unknown): string {
+  if (error && typeof error === "object" && "message" in error && typeof error.message === "string") {
+    const code = "code" in error && typeof error.code === "string" ? `[${error.code}] ` : "";
+    return `${code}${error.message}`;
+  }
+  return "분류를 불러오지 못했습니다. 연결 상태를 확인해 주세요.";
 }
 
 export function CategoryPicker({ categories, value, onChange, required = false }: {

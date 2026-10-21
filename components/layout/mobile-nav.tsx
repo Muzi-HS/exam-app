@@ -20,7 +20,7 @@ const NAV_ITEMS = [
     match: (p: string) => p === "/pedagogy" || p.startsWith("/pedagogy/"),
   },
   {
-    href: "/math-education/topics",
+    href: "/math-education/past-exams",
     label: "수학교육",
     icon: Shapes,
     match: (p: string) => p === "/math-education" || p.startsWith("/math-education/"),

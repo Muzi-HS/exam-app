@@ -6,7 +6,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { PAST_EXAMS_PATH } from "@/lib/past-exams";
 import { getPublicImageUrl, problemImagePath, uploadProblemImage, removeProblemImages } from "@/lib/supabase/storage";
-import { CategoryPicker, usePastExamCategories } from "./past-exam-shared";
+import { CategoryPicker, usePastExamCategories, pastExamErrorMessage } from "./past-exam-shared";
 import { ImageDropzone, type PendingImage } from "@/components/math/image-dropzone";
 import { Input, Textarea } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -83,7 +83,7 @@ export function PastExamForm({ id }: { id?: string }) {
       setError("문제를 저장하지 못했습니다. 로그인 및 연결 상태를 확인하고 다시 시도해 주세요.");
     } finally { setSaving(false); }
   }
-  if (categories.error || problem.error) return <p role="alert">등록 정보를 불러오지 못했습니다. 다시 접속해 주세요.</p>;
+  if (categories.error || problem.error) return <div className="flex flex-col items-start gap-3"><p role="alert">{pastExamErrorMessage(categories.error ?? problem.error)}</p><Button variant="secondary" onClick={() => { void categories.refetch(); if (id) void problem.refetch(); }}>다시 불러오기</Button></div>;
   if (categories.isLoading || (id && problem.isLoading)) return <p>불러오는 중...</p>;
   return <form onSubmit={save} className="flex flex-col gap-4">
     <h2 className="text-lg font-semibold">기출문제 {id ? "수정" : "등록"}</h2>
