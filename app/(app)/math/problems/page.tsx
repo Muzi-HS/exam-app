@@ -125,14 +125,15 @@ export default function ProblemsPage() {
 
   return (
     <div className="flex flex-col gap-4 pb-16">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-text-primary">문제 목록</h2>
           {data && (
             <p className="mt-1 font-mono text-xs text-text-secondary">전체 {data.total}개</p>
           )}
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/math/problems/import" className="inline-flex min-h-10 items-center px-2 text-sm text-accent">자료 등록</Link>
           <Button
             type="button"
             variant={selectionMode ? "secondary" : "ghost"}

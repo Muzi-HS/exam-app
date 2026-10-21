@@ -1,5 +1,5 @@
-import { PastExamImportPage } from "@/components/math-education/past-exam-import-page";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <PastExamImportPage />;
+  redirect("/math-education/past-exams");
 }

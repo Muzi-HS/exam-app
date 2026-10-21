@@ -73,7 +73,6 @@ export function PastExamList() {
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div><h2 className="text-lg font-semibold">문제 목록</h2><p className="mt-1 font-mono text-xs text-text-secondary">전체 {items.length}개</p></div>
       <div className="flex flex-wrap gap-2"><Button variant="secondary" onClick={() => setManaging(!managing)}>분류 수정</Button>
-        <Link href={`${PAST_EXAMS_PATH}/import`} className="inline-flex items-center px-2 text-sm text-accent">일괄 등록</Link>
         <Button variant={selectionMode ? "secondary" : "ghost"} onClick={() => { setSelectionMode(!selectionMode); setSelectedIds(new Set()); }}>{selectionMode ? <X size={15} /> : <ListChecks size={15} />}{selectionMode ? "선택 취소" : "문제 선택"}</Button>
         <Link className="inline-flex items-center gap-2 rounded-sm bg-accent px-4 py-2 text-sm text-bg" href={`${PAST_EXAMS_PATH}/new`}><Plus size={15} />문제 등록</Link></div>
     </div>
