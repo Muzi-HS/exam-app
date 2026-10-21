@@ -1,9 +1,9 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { ConceptPracticeSession } from "@/components/mindmap/concept-practice-session";
+import { PastExamPracticeSession } from "@/components/math-education/past-exam-practice-session";
 
 export default function Page() {
   const params = useParams<{ id: string }>();
-  return <ConceptPracticeSession domain="math_education" sessionId={params.id} />;
+  return <PastExamPracticeSession id={params.id} />;
 }

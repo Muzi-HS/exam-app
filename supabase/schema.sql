@@ -597,3 +597,13 @@ insert into public.past_exam_categories (id, parent_id, name, order_index) value
   ('past-root-1-4', 'past-root-1', '미분과 적분', 4),
   ('past-root-1-5', 'past-root-1', '확률과 통계', 5)
 on conflict (id) do nothing;
+
+
+-- Keep existing math/concept sessions and allow past exam practice items.
+begin;
+alter table public.study_session_items
+  drop constraint if exists study_session_items_item_type_check;
+alter table public.study_session_items
+  add constraint study_session_items_item_type_check
+  check (item_type in ('math_problem', 'concept_question', 'past_exam_problem'));
+commit;

@@ -42,6 +42,13 @@ Next.js 14(App Router) + TypeScript + Tailwind CSS + Supabase(DB·Auth·Storage)
 문제/해설 텍스트·수식·이미지, 연도·출처·문제번호·유튜브 링크·메모를 관리할 수 있습니다.
 목록의 **분류 수정**에서 분류를 선택하면 이름을 바꿀 수 있습니다.
 
+기출문제 연습을 사용하려면 기존 DB의 SQL Editor에서
+`supabase/migrations/202610210002_past_exam_practice.sql`도 실행하세요.
+기출문제 목록과 연습 설정에서 전공수학처럼 분류를 여러 개 선택할 수 있으며,
+목록에서 선택한 문제 또는 검색·분류 조건에 맞는 문제로 바로 연습할 수 있습니다.
+연습 설정에서는 문제 수와 순서를 지정하고, 연습 중에는 해설 확인과 이해도 기록이 가능합니다.
+연습 진행과 이해도는 계정별로 저장됩니다.
+
 ```bash
 npm install
 cp .env.local.example .env.local

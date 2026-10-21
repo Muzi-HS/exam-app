@@ -26,6 +26,8 @@ export function ProblemRow({
   selected = false,
   onToggleSelect,
   onRelease,
+  basePath = "/math/problems",
+  showProgress = true,
 }: {
   problem: ProblemListItem;
   onToggleFavorite: (id: string, next: boolean) => Promise<void>;
@@ -34,6 +36,8 @@ export function ProblemRow({
   onToggleSelect?: (id: string) => void;
   /** 지정하면(오답노트 화면) 항목 우측에 "해제" 버튼이 표시됩니다. */
   onRelease?: (id: string) => Promise<void>;
+  basePath?: string;
+  showProgress?: boolean;
 }) {
   const color = getSubjectColor(problem.subjectOrderIndex);
 
@@ -55,7 +59,7 @@ export function ProblemRow({
         </span>
       )}
 
-      {!selectionMode && (
+      {!selectionMode && showProgress && (
         <FavoriteButton
           isFavorite={problem.is_favorite}
           onToggle={(next) => onToggleFavorite(problem.id, next)}
@@ -85,7 +89,7 @@ export function ProblemRow({
         )}
       </span>
 
-      <StatusPill status={problem.current_status} />
+      {showProgress && <StatusPill status={problem.current_status} />}
 
       {!selectionMode && onRelease && (
         <button
@@ -118,5 +122,5 @@ export function ProblemRow({
     );
   }
 
-  return <Link href={`/math/problems/${problem.id}`}>{content}</Link>;
+  return <Link href={`${basePath}/${problem.id}`}>{content}</Link>;
 }

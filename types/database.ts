@@ -9,6 +9,7 @@ export type ProblemStatus = "blank" | "unknown" | "partial" | "mastered";
 export type Domain = "math" | "pedagogy" | "math_education";
 export type MindmapDomain = "pedagogy" | "math_education";
 export type ItemType = "math_problem" | "concept_question";
+export type SessionItemType = ItemType | "past_exam_problem";
 export type SessionMode = "practice" | "exam";
 export type ImageType = "problem" | "solution";
 
@@ -467,7 +468,7 @@ export interface Database {
           id: string;
           session_id: string;
           user_id: string;
-          item_type: ItemType;
+          item_type: SessionItemType;
           item_id: string;
           order_index: number;
           self_rating: ProblemStatus | null;
@@ -477,7 +478,7 @@ export interface Database {
           id?: string;
           session_id: string;
           user_id: string;
-          item_type: ItemType;
+          item_type: SessionItemType;
           item_id: string;
           order_index?: number;
         };
